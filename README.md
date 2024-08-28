@@ -1,2 +1,3 @@
 # homeassistant-eldom
-Integrating Eldom flat water boilers into Home Assistant
+
+Integrating Eldom flat water heaters into Home Assistant
