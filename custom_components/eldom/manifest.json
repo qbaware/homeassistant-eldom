@@ -1,0 +1,14 @@
+{
+  "domain": "eldom",
+  "name": "Eldom",
+  "codeowners": ["@danielgospodinow", "@qbaware"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/eldom",
+  "homekit": {},
+  "iot_class": "cloud_polling",
+  "requirements": ["pyeldom==0.1.0"],
+  "ssdp": [],
+  "zeroconf": [],
+  "version": "0.0.1"
+}
