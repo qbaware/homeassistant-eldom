@@ -6,11 +6,14 @@ from typing import Any
 from eldom.flat_boiler import Client as EldomClient
 
 from homeassistant.components.water_heater import (
+    STATE_ECO,
+    STATE_ELECTRIC,
+    STATE_HIGH_DEMAND,
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import STATE_OFF, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -21,15 +24,19 @@ from .coordinator import EldomCoordinator
 
 SUPPORT_FLAGS_HEATER = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
-    | WaterHeaterEntityFeature.ON_OFF
     | WaterHeaterEntityFeature.OPERATION_MODE
 )
 
+TEMP_UNIT = UnitOfTemperature.CELSIUS
+
+MAX_TEMP = 75
+MIN_TEMP = 35
+
 OPERATION_MODES = {
-    0: "Off",
-    1: "Heating",
-    2: "Smart",
-    3: "Study",
+    0: STATE_OFF,
+    1: STATE_ELECTRIC,  # Matches: "Heating"
+    2: STATE_ECO,  # Matches: "Smart"
+    3: STATE_HIGH_DEMAND,  # Matches: "Study"
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,21 +67,14 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
       available
     """
 
-    _attr_max_temp = 75
-    _attr_min_temp = 35
-    _attr_icon = "mdi:water-boiler"
-    _attr_supported_features = SUPPORT_FLAGS_HEATER
-
     def __init__(self, coordinator, flat_boiler_id, api: EldomClient) -> None:
         """Initialize the water heater."""
         super().__init__(coordinator)
         self._flat_boiler = coordinator.data[flat_boiler_id]
         self._api = api
         self._name = self._flat_boiler.DeviceID
-        self._is_on = self._flat_boiler.State != 0
         self._current_temperature = self._flat_boiler.STL_Temp
         self._target_temperature = self._flat_boiler.SetTemp
-        self._boost_mode = self._flat_boiler.HasBoost
         self._current_operation = OPERATION_MODES.get(
             self._flat_boiler.State, "Unknown"
         )
@@ -86,9 +86,24 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
         return self._name
 
     @property
+    def supported_features(self) -> WaterHeaterEntityFeature:
+        """Return the list of supported features."""
+        return SUPPORT_FLAGS_HEATER
+
+    @property
     def temperature_unit(self) -> str:
         """Return the unit of measurement."""
-        return UnitOfTemperature.CELSIUS
+        return TEMP_UNIT
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum temperature."""
+        return MAX_TEMP
+
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum temperature."""
+        return MIN_TEMP
 
     @property
     def current_temperature(self) -> float | None:
@@ -99,14 +114,6 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
     def target_temperature(self) -> float | None:
         """Return the temperature we try to reach."""
         return self._target_temperature
-
-    @property
-    def supported_features(self) -> WaterHeaterEntityFeature:
-        """Return the list of supported features."""
-        return (
-            WaterHeaterEntityFeature.TARGET_TEMPERATURE
-            | WaterHeaterEntityFeature.OPERATION_MODE
-        )
 
     @property
     def current_operation(self) -> str | None:
@@ -124,21 +131,11 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
             raise HomeAssistantError("Operation mode not supported")
 
         self._current_operation = operation_mode
-        operation_mode_id = {v: k for k, v in OPERATION_MODES.items()}[operation_mode]
         self.schedule_update_ha_state()
+        operation_mode_id = {v: k for k, v in OPERATION_MODES.items()}[operation_mode]
         await self._api.set_flat_boiler_state(
             self._flat_boiler.DeviceID, operation_mode_id
         )
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_on(self):
-        """Turn on the water heater."""
-        await self._api.set_flat_boiler_state(self._flat_boiler.DeviceID, 2)
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_off(self):
-        """Turn off the water heater."""
-        await self._api.set_flat_boiler_state(self._flat_boiler.DeviceID, 0)
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -151,30 +148,13 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
         )
         await self.coordinator.async_request_refresh()
 
-    async def async_set_boost_mode(self, boost_mode: bool):
-        """Enable or disable boost mode."""
-        if not boost_mode:
-            _LOGGER.warning("Boost mode disabling is not supported")
-            return
-
-        if self.current_operation() != OPERATION_MODES.get(2):
-            _LOGGER.warning("Boost mode can only be enabled in Smart mode")
-            return
-
-        self._boost_mode = boost_mode
-        self.schedule_update_ha_state()
-        await self._api.set_flat_boiler_powerful_mode_on(self._flat_boiler.DeviceID)
-        await self.coordinator.async_request_refresh()
-
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._name = self._flat_boiler.DeviceID
         self._flat_boiler = self.coordinator.data[self._flat_boiler.DeviceID]
-        self._is_on = self._flat_boiler.State != 0
         self._current_temperature = self._flat_boiler.STL_Temp
         self._target_temperature = self._flat_boiler.SetTemp
-        self._boost_mode = self._flat_boiler.HasBoost
         self._current_operation = OPERATION_MODES.get(
             self._flat_boiler.State, "Unknown"
         )
