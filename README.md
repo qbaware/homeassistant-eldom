@@ -2,7 +2,8 @@
 
 Connect your Eldom flat boilers to Home Assitant and operate them via Eldom's cloud APIs with [pyeldom](https://github.com/qbaware/pyeldom).
 
-![image](https://github.com/user-attachments/assets/74b3e6e4-84d8-4f03-8983-98f86e85ff9b)
+![eldom-integration](https://github.com/user-attachments/assets/f190a7bd-8726-44e1-a194-f3d66dd65c43)
+
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/danielgospodinow)
 
