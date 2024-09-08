@@ -16,11 +16,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
-from .coordinator import EldomCoordinator
+from .const import DOMAIN, MANUFACTURER_NAME
+from .models import EldomData
 
 SUPPORT_FLAGS_HEATER = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
@@ -46,14 +47,14 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Eldom water heaters setup."""
-    api: EldomClient = hass.data[DOMAIN][entry.entry_id]
-    coordinator = EldomCoordinator(hass, api)
 
-    await coordinator.async_config_entry_first_refresh()
+    eldom_data: EldomData = hass.data[DOMAIN][entry.entry_id]
+
+    await eldom_data.coordinator.async_config_entry_first_refresh()
 
     async_add_entities(
-        EldomFlatWaterHeaterEntity(coordinator, flat_boiler.DeviceID, api)
-        for _, flat_boiler in enumerate(coordinator.data.values())
+        EldomFlatWaterHeaterEntity(flat_boiler.DeviceID, eldom_data)
+        for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
     )
 
 
@@ -67,18 +68,36 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
       available
     """
 
-    def __init__(self, coordinator, flat_boiler_id, api: EldomClient) -> None:
+    def __init__(self, flat_boiler_id: str, eldom_data: EldomData) -> None:
         """Initialize the water heater."""
-        super().__init__(coordinator)
-        self._flat_boiler = coordinator.data[flat_boiler_id]
-        self._api = api
-        self._name = self._flat_boiler.DeviceID
+        super().__init__(eldom_data.coordinator)
+        self._api = eldom_data.api
+        self._flat_boiler_id = flat_boiler_id
+
+        self._flat_boiler = self.coordinator.data[self._flat_boiler_id]
+        self._name = f"Flat Boiler ({self._flat_boiler_id})"
         self._current_temperature = self._flat_boiler.STL_Temp
         self._target_temperature = self._flat_boiler.SetTemp
         self._current_operation = OPERATION_MODES.get(
             self._flat_boiler.State, "Unknown"
         )
         self._operation_list = list(OPERATION_MODES.values())
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._flat_boiler.DeviceID)},
+            manufacturer=MANUFACTURER_NAME,
+            model=self._flat_boiler.Type,
+            sw_version=self._flat_boiler.SoftwareVersion,
+            hw_version=self._flat_boiler.HardwareVersion,
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return self._flat_boiler.DeviceID
 
     @property
     def name(self) -> str:
@@ -151,11 +170,13 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._name = self._flat_boiler.DeviceID
-        self._flat_boiler = self.coordinator.data[self._flat_boiler.DeviceID]
+        self._flat_boiler = self.coordinator.data[self._flat_boiler_id]
+        self._name = f"Flat Boiler ({self._flat_boiler_id})"
         self._current_temperature = self._flat_boiler.STL_Temp
         self._target_temperature = self._flat_boiler.SetTemp
         self._current_operation = OPERATION_MODES.get(
             self._flat_boiler.State, "Unknown"
         )
+        self._operation_list = list(OPERATION_MODES.values())
+
         self.async_write_ha_state()

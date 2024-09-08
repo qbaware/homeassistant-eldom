@@ -13,10 +13,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
 
 from .const import API_BASE_URL, DOMAIN
+from .coordinator import EldomCoordinator
+from .models import EldomData
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.WATER_HEATER]
+PLATFORMS: list[Platform] = [
+    Platform.SWITCH,
+    Platform.WATER_HEATER,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -36,7 +41,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.error("Failed to login to Eldom API: %s", e)
         return False
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = api_client
+    coordinator = EldomCoordinator(hass, api_client)
+
+    eldom_data = EldomData(api_client, coordinator)
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = eldom_data
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -46,6 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    api_client = hass.data[DOMAIN].pop(entry.entry_id)
-    await api_client.close()
+
+    hass.data[DOMAIN].pop(entry.entry_id)
+
     return True
