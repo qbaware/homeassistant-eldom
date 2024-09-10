@@ -11,13 +11,14 @@ Connect your [Eldom](https://eldominvest.com/en/index.html) flat boilers to Home
 # Installation
 
 ## HACS Installation
+
 Available soon.
 
 ## Custom components
 
 1. Download or clone the integration to your local machine.
-2. Navigate to the custom_components directory in your Home Assistant installation directory.
-3. Copy the folder custom_components/eldom from the downloaded integration to the Home Assistant custom_components directory.
+2. Navigate to the `custom_components` directory in your Home Assistant installation directory.
+3. Copy the folder `custom_components/eldom` from the downloaded integration to the Home Assistant `custom_components` directory.
 4. Restart Home Assistant.
 
 # Configuration
