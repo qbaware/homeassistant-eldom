@@ -13,6 +13,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, MANUFACTURER_NAME
 from .models import EldomData
 
+REQUIRED_OPERATION_MODE_FOR_BOOST = 2
+SWITCH_NAME = "Powerful"
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -41,17 +44,18 @@ class EldomPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
         super().__init__(eldom_data.coordinator)
         self._flat_boiler_id = flat_boiler_id
         self._api = eldom_data.api
-        self._name = f"{self._flat_boiler_id}-powerful"
+        self._id = f"{self._flat_boiler_id}-powerful-switch"
 
         self._powerful_enabled = self.coordinator.data[self._flat_boiler_id].HasBoost
         self._eco_mode_selected = (
-            self.coordinator.data[self._flat_boiler_id].State == 2
-        )  # TODO: Read this from constants.
+            self.coordinator.data[self._flat_boiler_id].State
+            == REQUIRED_OPERATION_MODE_FOR_BOOST
+        )
 
     @property
     def name(self) -> str:
         """Return the name of the powerful mode switch."""
-        return "Powerful"
+        return SWITCH_NAME
 
     @property
     def icon(self) -> str:
@@ -74,7 +78,7 @@ class EldomPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
     @property
     def unique_id(self) -> str:
         """Return a unique ID."""
-        return self._name
+        return self._id
 
     @property
     def is_on(self) -> bool:
@@ -83,18 +87,28 @@ class EldomPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn powerful on."""
-        _LOGGER.error("Powerful mode is not supported yet")
+        if not self._eco_mode_selected:
+            _LOGGER.warning("Powerful mode can only be turned on when in ECO mode")
+            return
+
+        self._powerful_enabled = True
+        self.schedule_update_ha_state()
+
+        await self._api.set_flat_boiler_powerful_mode_on(self._flat_boiler_id)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn powerful off."""
-        _LOGGER.error("Powerful mode is not supported yet")
+        _LOGGER.warning(
+            "Powerful mode cannot be turned off, change the mode to something else to disable the powerful mode"
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._powerful_enabled = self.coordinator.data[self._flat_boiler_id].HasBoost
         self._eco_mode_selected = (
-            self.coordinator.data[self._flat_boiler_id].State == 2
-        )  # TODO: Read this from constants.
+            self.coordinator.data[self._flat_boiler_id].State
+            == REQUIRED_OPERATION_MODE_FOR_BOOST
+        )
 
         self.async_write_ha_state()
