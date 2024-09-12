@@ -32,7 +32,12 @@ Supported devices:
 
 ## HACS Installation
 
-Available soon.
+1. Open HACS.
+2. Select `Integrations`, then select the 3-dots in the upper-right corner, then select `Custom Repositories`.
+3. Put the reposity URL in the `Repository` field, then select `Integration` in the `Category` dropdown list and click `Add`.
+4. Now, you can search for `Eldom` in HACS and install the integration.
+5. After the installation, you need to restart Home Assistant.
+6. Now, you can proceed with [Usage](#usage).
 
 ## Custom components
 
