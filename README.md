@@ -12,7 +12,7 @@ Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assi
 
 Allows you to control Eldom devices via Home Assistant.
 
-Note that there's only one way to connect to the Eldom devices - via their Cloud APIs.
+Note that there's only one way to control your Eldom devices - via their Cloud APIs. There's no support for local network control.
 
 Supported devices:
 
