@@ -22,7 +22,7 @@ Supported devices:
         - `Eco` (corresponds to "Smart")
         - `High Demand` (corresponds to "Study")
         - `Off`
-    - Enable Powerful mode switch (only works while `Eco` mode is enabled)
+    - Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
 
 ![Flat boiler main view](./docs/flat-boiler-main-view.png)
 
