@@ -1,4 +1,4 @@
-# Eldom Flat Boiler Integration For Home Assistant
+# Eldom Integration For Home Assistant
 
 Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assitant and operate them via Eldom's Cloud APIs with [pyeldom](https://github.com/qbaware/pyeldom).
 
