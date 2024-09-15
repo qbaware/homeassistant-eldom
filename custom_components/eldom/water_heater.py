@@ -3,8 +3,6 @@
 import logging
 from typing import Any
 
-from eldom.flat_boiler import Client as EldomClient
-
 from homeassistant.components.water_heater import (
     STATE_ECO,
     STATE_ELECTRIC,
@@ -20,7 +18,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER_NAME
+from .const import DEVICE_TYPE_MAPPING, DOMAIN, MANUFACTURER_NAME
 from .models import EldomData
 
 SUPPORT_FLAGS_HEATER = (
@@ -89,7 +87,7 @@ class EldomFlatWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
         return DeviceInfo(
             identifiers={(DOMAIN, self._flat_boiler.DeviceID)},
             manufacturer=MANUFACTURER_NAME,
-            model=self._flat_boiler.Type,
+            model=DEVICE_TYPE_MAPPING.get(self._flat_boiler.Type),
             sw_version=self._flat_boiler.SoftwareVersion,
             hw_version=self._flat_boiler.HardwareVersion,
         )
