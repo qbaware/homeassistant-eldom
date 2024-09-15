@@ -19,6 +19,7 @@ from .models import EldomData
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
     Platform.SWITCH,
     Platform.WATER_HEATER,
 ]
