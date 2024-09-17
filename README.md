@@ -24,9 +24,9 @@ Supported devices:
     - `Off`
   - Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
 
-![Flat boiler detailed view](./docs/flat-boiler-detailed-view.png)
+![Flat boiler detailed view](./docs/flat-boiler-detailed-view-new.png)
 
-![Flat boiler main view](./docs/flat-boiler-main-view.png)
+![Flat boiler main view](./docs/flat-boiler-main-view-new.png)
 
 ## Installation
 
