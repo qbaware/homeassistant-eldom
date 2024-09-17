@@ -36,12 +36,13 @@ async def async_setup_entry(
 
     await eldom_data.coordinator.async_config_entry_first_refresh()
 
-    # Add energy consumption sensors.
+    # Add day energy consumption sensors.
     async_add_entities(
         EldomDayEnergyConsumptionSensor(flat_boiler.DeviceID, eldom_data)
         for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
     )
 
+    # Add night energy consumption sensors.
     async_add_entities(
         EldomNightEnergyConsumptionSensor(flat_boiler.DeviceID, eldom_data)
         for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
