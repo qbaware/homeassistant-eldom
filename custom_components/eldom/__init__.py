@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from eldom.flat_boiler import Client as EldomClient
+from eldom.client import Client as EldomClient
 import requests
 
 from homeassistant.config_entries import ConfigEntry

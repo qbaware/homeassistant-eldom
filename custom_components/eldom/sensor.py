@@ -10,7 +10,9 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER_NAME
+from .const import DEVICE_TYPE_FLAT_BOILER, DEVICE_TYPE_SMART_BOILER, DOMAIN
+from .coordinator import EldomCoordinator
+from .eldom_boiler import EldomBoiler
 from .models import EldomData
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,41 +38,66 @@ async def async_setup_entry(
 
     await eldom_data.coordinator.async_config_entry_first_refresh()
 
-    # Add day energy consumption sensors.
-    async_add_entities(
-        EldomDayEnergyConsumptionSensor(flat_boiler.DeviceID, eldom_data)
-        for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
-    )
+    entities_to_add = []
 
-    # Add night energy consumption sensors.
-    async_add_entities(
-        EldomNightEnergyConsumptionSensor(flat_boiler.DeviceID, eldom_data)
-        for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
-    )
+    for flat_boiler in eldom_data.coordinator.data.get(
+        DEVICE_TYPE_FLAT_BOILER
+    ).values():
+        entities_to_add.append(
+            EldomBoilerDayEnergyConsumptionSensor(flat_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomBoilerNightEnergyConsumptionSensor(flat_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomBoilerSavedEnergySensor(flat_boiler, eldom_data.coordinator)
+        )
 
-    # Add energy saved sensors.
-    async_add_entities(
-        EldomSavedEnergySensor(flat_boiler.DeviceID, eldom_data)
-        for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
-    )
+    for smart_boiler in eldom_data.coordinator.data.get(
+        DEVICE_TYPE_SMART_BOILER
+    ).values():
+        entities_to_add.append(
+            EldomBoilerDayEnergyConsumptionSensor(smart_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomBoilerNightEnergyConsumptionSensor(
+                smart_boiler, eldom_data.coordinator
+            )
+        )
+        entities_to_add.append(
+            EldomBoilerSavedEnergySensor(smart_boiler, eldom_data.coordinator)
+        )
+
+    async_add_entities(entities_to_add)
 
 
-class EldomDayEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
-    """Representation of an Eldom day energy consumption sensor."""
+class EldomBoilerDayEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
+    """Representation of an Eldom boiler day energy consumption sensor."""
 
-    def __init__(self, flat_boiler_id: str, eldom_data: EldomData) -> None:
+    def __init__(
+        self, eldom_boiler: EldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
         """Initialize an Eldom energy consumption sensor."""
-        super().__init__(eldom_data.coordinator)
-        self._flat_boiler_id = flat_boiler_id
-        self._api = eldom_data.api
-        self._id = f"{self._flat_boiler_id}-day-energy-consumption-sensor"
+        super().__init__(coordinator)
 
-        self._day_usage = self.coordinator.data[self._flat_boiler_id].EnergyD
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-day-energy-consumption-sensor"
 
     @property
     def name(self) -> str:
         """Return the name of the sensor."""
-        return DAY_ENERGY_CONSUMPTION_SENSOR_NAME
+        return f"{self._eldom_boiler.name}'s {DAY_ENERGY_CONSUMPTION_SENSOR_NAME}"
 
     @property
     def icon(self) -> str:
@@ -83,19 +110,6 @@ class EldomDayEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
         return SensorDeviceClass.ENERGY
 
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information about this water heater."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._flat_boiler_id)},
-            manufacturer=MANUFACTURER_NAME,
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self._id
-
-    @property
     def native_unit_of_measurement(self) -> str:
         """Return the unit of measurement."""
         return UnitOfEnergy.KILO_WATT_HOUR
@@ -103,32 +117,45 @@ class EldomDayEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
     @property
     def native_value(self) -> int:
         """Return the state of the sensor."""
-        return int(self._day_usage)
+        return int(self._eldom_boiler.day_energy_consumption)
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._day_usage = self.coordinator.data[self._flat_boiler_id].EnergyD
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
 
         self.async_write_ha_state()
 
 
-class EldomNightEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
-    """Representation of an Eldom night energy consumption sensor."""
+class EldomBoilerNightEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
+    """Representation of an Eldom boiler night energy consumption sensor."""
 
-    def __init__(self, flat_boiler_id: str, eldom_data: EldomData) -> None:
+    def __init__(
+        self, eldom_boiler: EldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
         """Initialize an Eldom energy consumption sensor."""
-        super().__init__(eldom_data.coordinator)
-        self._flat_boiler_id = flat_boiler_id
-        self._api = eldom_data.api
-        self._id = f"{self._flat_boiler_id}-night-energy-consumption-sensor"
+        super().__init__(coordinator)
 
-        self._night_usage = self.coordinator.data[self._flat_boiler_id].EnergyN
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-night-energy-consumption-sensor"
 
     @property
     def name(self) -> str:
         """Return the name of the sensor."""
-        return NIGHT_ENERGY_CONSUMPTION_SENSOR_NAME
+        return f"{self._eldom_boiler.name}'s {NIGHT_ENERGY_CONSUMPTION_SENSOR_NAME}"
 
     @property
     def icon(self) -> str:
@@ -141,19 +168,6 @@ class EldomNightEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
         return SensorDeviceClass.ENERGY
 
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information about this water heater."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._flat_boiler_id)},
-            manufacturer=MANUFACTURER_NAME,
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self._id
-
-    @property
     def native_unit_of_measurement(self) -> str:
         """Return the unit of measurement."""
         return UnitOfEnergy.KILO_WATT_HOUR
@@ -161,32 +175,45 @@ class EldomNightEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
     @property
     def native_value(self) -> int:
         """Return the state of the sensor."""
-        return int(self._night_usage)
+        return int(self._eldom_boiler.night_energy_consumption)
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._night_usage = self.coordinator.data[self._flat_boiler_id].EnergyN
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
 
         self.async_write_ha_state()
 
 
-class EldomSavedEnergySensor(SensorEntity, CoordinatorEntity):
-    """Representation of an Eldom energy saved sensor."""
+class EldomBoilerSavedEnergySensor(SensorEntity, CoordinatorEntity):
+    """Representation of an Eldom boiler energy saved sensor."""
 
-    def __init__(self, flat_boiler_id: str, eldom_data: EldomData) -> None:
+    def __init__(
+        self, eldom_boiler: EldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
         """Initialize an Eldom energy saved sensor."""
-        super().__init__(eldom_data.coordinator)
-        self._flat_boiler_id = flat_boiler_id
-        self._api = eldom_data.api
-        self._id = f"{self._flat_boiler_id}-energy-saved-sensor"
+        super().__init__(coordinator)
 
-        self._saved_usage = self.coordinator.data[self._flat_boiler_id].SavedEnergy
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-energy-saved-sensor"
 
     @property
     def name(self) -> str:
         """Return the name of the sensor."""
-        return SAVED_ENERGY_SENSOR_NAME
+        return f"{self._eldom_boiler.name}'s {SAVED_ENERGY_SENSOR_NAME}"
 
     @property
     def icon(self) -> str:
@@ -199,19 +226,6 @@ class EldomSavedEnergySensor(SensorEntity, CoordinatorEntity):
         return SensorDeviceClass.ENERGY
 
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information about this water heater."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._flat_boiler_id)},
-            manufacturer=MANUFACTURER_NAME,
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self._id
-
-    @property
     def native_unit_of_measurement(self) -> str:
         """Return the unit of measurement."""
         return UnitOfEnergy.KILO_WATT_HOUR
@@ -219,11 +233,13 @@ class EldomSavedEnergySensor(SensorEntity, CoordinatorEntity):
     @property
     def native_value(self) -> int:
         """Return the state of the sensor."""
-        return int(self._saved_usage / 100)
+        return int(self._eldom_boiler.saved_energy / 100)
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._saved_usage = self.coordinator.data[self._flat_boiler_id].SavedEnergy
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
 
         self.async_write_ha_state()

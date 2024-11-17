@@ -10,10 +10,12 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER_NAME
+from .const import DEVICE_TYPE_FLAT_BOILER, DEVICE_TYPE_SMART_BOILER, DOMAIN
+from .coordinator import EldomCoordinator
+from .eldom_boiler import OPERATION_MODES, EldomBoiler
 from .models import EldomData
 
-REQUIRED_OPERATION_MODE_FOR_BOOST = 2
+REQUIRED_OPERATION_MODE_FOR_BOOST = OPERATION_MODES[2]
 SWITCH_NAME = "Powerful"
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,31 +33,47 @@ async def async_setup_entry(
     await eldom_data.coordinator.async_config_entry_first_refresh()
 
     async_add_entities(
-        EldomPowerfulModeSwitch(flat_boiler.DeviceID, eldom_data)
-        for _, flat_boiler in enumerate(eldom_data.coordinator.data.values())
+        EldomBoilerPowerfulModeSwitch(flat_boiler, eldom_data.coordinator)
+        for flat_boiler in eldom_data.coordinator.data.get(
+            DEVICE_TYPE_FLAT_BOILER, []
+        ).values()
+    )
+
+    async_add_entities(
+        EldomBoilerPowerfulModeSwitch(smart_boiler, eldom_data.coordinator)
+        for smart_boiler in eldom_data.coordinator.data.get(
+            DEVICE_TYPE_SMART_BOILER, []
+        ).values()
     )
 
 
-class EldomPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
+class EldomBoilerPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
     """Representation of Eldom powerful switch."""
 
-    def __init__(self, flat_boiler_id: str, eldom_data: EldomData) -> None:
+    def __init__(
+        self, eldom_boiler: EldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
         """Initialize an Eldom powerful control."""
-        super().__init__(eldom_data.coordinator)
-        self._flat_boiler_id = flat_boiler_id
-        self._api = eldom_data.api
-        self._id = f"{self._flat_boiler_id}-powerful-switch"
+        super().__init__(coordinator)
 
-        self._powerful_enabled = self.coordinator.data[self._flat_boiler_id].HasBoost
-        self._eco_mode_selected = (
-            self.coordinator.data[self._flat_boiler_id].State
-            == REQUIRED_OPERATION_MODE_FOR_BOOST
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
         )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-powerful-switch"
 
     @property
     def name(self) -> str:
         """Return the name of the powerful mode switch."""
-        return SWITCH_NAME
+        return f"{self._eldom_boiler.name}'s {SWITCH_NAME} Switch"
 
     @property
     def icon(self) -> str:
@@ -68,33 +86,21 @@ class EldomPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
         return SwitchDeviceClass.SWITCH
 
     @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information about this water heater."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._flat_boiler_id)},
-            manufacturer=MANUFACTURER_NAME,
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self._id
-
-    @property
     def is_on(self) -> bool:
         """Return the powerful status."""
-        return self._powerful_enabled
+        return self._eldom_boiler.powerful_enabled
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn powerful on."""
-        if not self._eco_mode_selected:
+        eco_mode_enabled = (
+            self._eldom_boiler.current_operation == REQUIRED_OPERATION_MODE_FOR_BOOST
+        )
+        if not eco_mode_enabled:
             _LOGGER.warning("Powerful mode can only be turned on when in ECO mode")
             return
 
-        self._powerful_enabled = True
+        await self._eldom_boiler.enable_powerful_mode()
         self.schedule_update_ha_state()
-
-        await self._api.set_flat_boiler_powerful_mode_on(self._flat_boiler_id)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn powerful off."""
@@ -102,13 +108,13 @@ class EldomPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
             "Powerful mode cannot be turned off, change the mode to something else to disable the powerful mode"
         )
 
+        await self.coordinator.async_request_refresh()
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._powerful_enabled = self.coordinator.data[self._flat_boiler_id].HasBoost
-        self._eco_mode_selected = (
-            self.coordinator.data[self._flat_boiler_id].State
-            == REQUIRED_OPERATION_MODE_FOR_BOOST
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
         )
 
         self.async_write_ha_state()

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from eldom.flat_boiler import Client as EldomClient
+from eldom.client import Client as EldomClient
 
 from .coordinator import EldomCoordinator
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from eldom.flat_boiler import Client as EldomClient
+from eldom.client import Client as EldomClient
 import voluptuous as vol
 
 from homeassistant import config_entries
