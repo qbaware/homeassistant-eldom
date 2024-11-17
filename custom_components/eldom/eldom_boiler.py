@@ -331,7 +331,7 @@ class SmartEldomBoiler(EldomBoiler):
 
         self._smart_boiler_details.State = operation_mode_id
 
-        await self._eldom_client.set_flat_boiler_state(
+        await self._eldom_client.set_smart_boiler_state(
             self.device_id, operation_mode_id
         )
 
@@ -339,7 +339,7 @@ class SmartEldomBoiler(EldomBoiler):
         """Set the temperature of the boiler."""
         self._smart_boiler_details.SetTemp = temperature
 
-        await self._eldom_client.set_flat_boiler_temperature(
+        await self._eldom_client.set_smart_boiler_temperature(
             self.device_id, temperature
         )
 
