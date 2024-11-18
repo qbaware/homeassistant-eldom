@@ -1,6 +1,6 @@
 # Eldom Integration For Home Assistant
 
-Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assitant and operate them via Eldom's Cloud APIs with [pyeldom](https://github.com/qbaware/pyeldom).
+Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assistant and operate them via Eldom's Cloud APIs with [pyeldom](https://github.com/qbaware/pyeldom).
 
 ![eldom-integration](https://github.com/user-attachments/assets/d058d86b-0796-4d2f-b686-e9d4312ecd76)
 
