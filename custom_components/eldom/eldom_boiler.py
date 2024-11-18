@@ -94,6 +94,14 @@ class EldomBoiler(ABC):
         """Return current operation ie. Off, Heating, Smart, or Study."""
 
     @abstractmethod
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+
+    @abstractmethod
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+
+    @abstractmethod
     async def set_operation_mode(self, operation_mode: str) -> None:
         """Set the operation mode of the boiler."""
 
@@ -199,6 +207,14 @@ class FlatEldomBoiler(EldomBoiler):
     def current_operation(self) -> str:
         """Return current operation ie. Off, Heating, Smart, or Study."""
         return OPERATION_MODES.get(self._flat_boiler_details.State, "Unknown")
+
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+        await self.set_operation_mode(STATE_ECO)
+
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+        await self.set_operation_mode(STATE_OFF)
 
     async def set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
@@ -321,6 +337,14 @@ class SmartEldomBoiler(EldomBoiler):
     def current_operation(self) -> str:
         """Return current operation ie. Off, Heating, Smart, or Study."""
         return OPERATION_MODES.get(self._smart_boiler_details.State, "Unknown")
+
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+        await self.set_operation_mode(STATE_ECO)
+
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+        await self.set_operation_mode(STATE_OFF)
 
     async def set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""

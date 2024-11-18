@@ -29,6 +29,7 @@ from .models import EldomData
 SUPPORT_FLAGS_HEATER = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
     | WaterHeaterEntityFeature.OPERATION_MODE
+    | WaterHeaterEntityFeature.ON_OFF
 )
 
 TEMP_UNIT = UnitOfTemperature.CELSIUS
@@ -139,6 +140,18 @@ class EldomWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
     def operation_list(self) -> list[str] | None:
         """Return the list of available operation modes."""
         return self._eldom_boiler.operation_modes
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the water heater on."""
+        await self._eldom_boiler.turn_on()
+        self.schedule_update_ha_state()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the water heater off."""
+        await self._eldom_boiler.turn_off()
+        self.schedule_update_ha_state()
+        await self.coordinator.async_request_refresh()
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
