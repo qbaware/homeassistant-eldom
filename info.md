@@ -14,19 +14,41 @@ This integration allows you to control Eldom devices via Home Assistant.
 
 Note that there's only one way to control your Eldom devices - via their Cloud APIs. There's no support for local network control.
 
-Supported devices:
+### Supported devices
 
-- Flat boilers
-  - Operational mode selection
-    - `Electric` (corresponds to "Heating")
-    - `Eco` (corresponds to "Smart")
-    - `High Demand` (corresponds to "Study")
-    - `Off`
-  - Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
+#### Flat boilers
 
-![Flat boiler detailed view](./docs/flat-boiler-detailed-view.png)
+- Operational mode selection
+  - `Electric` (corresponds to "Heating")
+  - `Eco` (corresponds to "Smart")
+  - `High Demand` (corresponds to "Study")
+  - `Off`
+- Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
+- Display sensors
+  - Heater is currently on/off
+  - Day energy consumption
+  - Night energy consumption
+  - Saved energy
 
-![Flat boiler main view](./docs/flat-boiler-main-view.png)
+#### Smart boilers
+
+- Operational mode selection
+  - `Electric` (corresponds to "Heating")
+  - `Eco` (corresponds to "Smart")
+  - `High Demand` (corresponds to "Study")
+  - `Off`
+- Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
+- Display sensors
+  - Heater is currently on/off
+  - Day energy consumption
+  - Night energy consumption
+  - Saved energy
+
+### Showcase
+
+![Flat boiler detailed view](./docs/flat-boiler-detailed-view-new.png)
+
+![Flat boiler main view](./docs/flat-boiler-main-view-new.png)
 
 ## Usage
 
