@@ -26,6 +26,11 @@ NIGHT_ENERGY_CONSUMPTION_ICON = "mdi:lightning-bolt"
 SAVED_ENERGY_SENSOR_NAME = "Saved Energy"
 SAVED_ENERGY_SENSOR_ICON = "mdi:lightning-bolt"
 
+HEATER_SENSOR_NAME = "Heater"
+HEATER_SENSOR_ICON = "mdi:heat-wave"
+HEATER_STATE_ON = "On"
+HEATER_STATE_OFF = "Off"
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -52,6 +57,9 @@ async def async_setup_entry(
         entities_to_add.append(
             EldomBoilerSavedEnergySensor(flat_boiler, eldom_data.coordinator)
         )
+        entities_to_add.append(
+            EldomBoilerHeaterSensor(flat_boiler, eldom_data.coordinator)
+        )
 
     for smart_boiler in eldom_data.coordinator.data.get(
         DEVICE_TYPE_SMART_BOILER
@@ -66,6 +74,9 @@ async def async_setup_entry(
         )
         entities_to_add.append(
             EldomBoilerSavedEnergySensor(smart_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomBoilerHeaterSensor(smart_boiler, eldom_data.coordinator)
         )
 
     async_add_entities(entities_to_add)
@@ -101,12 +112,12 @@ class EldomBoilerDayEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
 
     @property
     def icon(self) -> str:
-        """Return the icon of the powerful mode switch."""
+        """Return the icon of the sensor."""
         return DAY_ENERGY_CONSUMPTION_ICON
 
     @property
     def device_class(self) -> SensorDeviceClass:
-        """Return the device class of the powerful mode switch."""
+        """Return the device class of the sensor."""
         return SensorDeviceClass.ENERGY
 
     @property
@@ -159,12 +170,12 @@ class EldomBoilerNightEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
 
     @property
     def icon(self) -> str:
-        """Return the icon of the powerful mode switch."""
+        """Return the icon of the sensor."""
         return NIGHT_ENERGY_CONSUMPTION_ICON
 
     @property
     def device_class(self) -> SensorDeviceClass:
-        """Return the device class of the powerful mode switch."""
+        """Return the device class of the sensor."""
         return SensorDeviceClass.ENERGY
 
     @property
@@ -217,12 +228,12 @@ class EldomBoilerSavedEnergySensor(SensorEntity, CoordinatorEntity):
 
     @property
     def icon(self) -> str:
-        """Return the icon of the powerful mode switch."""
+        """Return the icon of the sensor."""
         return SAVED_ENERGY_SENSOR_ICON
 
     @property
     def device_class(self) -> SensorDeviceClass:
-        """Return the device class of the powerful mode switch."""
+        """Return the device class of the sensor."""
         return SensorDeviceClass.ENERGY
 
     @property
@@ -234,6 +245,66 @@ class EldomBoilerSavedEnergySensor(SensorEntity, CoordinatorEntity):
     def native_value(self) -> int:
         """Return the state of the sensor."""
         return int(self._eldom_boiler.saved_energy / 100)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
+
+        self.async_write_ha_state()
+
+
+class EldomBoilerHeaterSensor(SensorEntity, CoordinatorEntity):
+    """Representation of an Eldom boiler's heater."""
+
+    def __init__(
+        self, eldom_boiler: EldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
+        """Initialize a sensor for an Eldom boiler's heater."""
+        super().__init__(coordinator)
+
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-heater-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s {HEATER_SENSOR_NAME}"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the heater sensor."""
+        return HEATER_SENSOR_ICON
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """Return the device class of the sensor."""
+        return SensorDeviceClass.ENUM
+
+    @property
+    def options(self) -> list[str]:
+        """Return a set of possible options."""
+        return [HEATER_STATE_ON, HEATER_STATE_OFF]
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return (
+            HEATER_STATE_ON if self._eldom_boiler.heater_enabled else HEATER_STATE_OFF
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:

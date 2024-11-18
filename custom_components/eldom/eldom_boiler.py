@@ -94,6 +94,10 @@ class EldomBoiler(ABC):
         """Return current operation ie. Off, Heating, Smart, or Study."""
 
     @abstractmethod
+    def heater_enabled(self) -> bool:
+        """Retrieve whether the boiler's heater is enabled."""
+
+    @abstractmethod
     async def turn_on(self) -> None:
         """Turn the boiler on."""
 
@@ -207,6 +211,11 @@ class FlatEldomBoiler(EldomBoiler):
     def current_operation(self) -> str:
         """Return current operation ie. Off, Heating, Smart, or Study."""
         return OPERATION_MODES.get(self._flat_boiler_details.State, "Unknown")
+
+    @property
+    def heater_enabled(self) -> bool:
+        """Retrieve whether the boiler's heater is enabled."""
+        return self._flat_boiler_details.PowerFlag != 0
 
     async def turn_on(self) -> None:
         """Turn the boiler on."""
@@ -337,6 +346,11 @@ class SmartEldomBoiler(EldomBoiler):
     def current_operation(self) -> str:
         """Return current operation ie. Off, Heating, Smart, or Study."""
         return OPERATION_MODES.get(self._smart_boiler_details.State, "Unknown")
+
+    @property
+    def heater_enabled(self) -> bool:
+        """Retrieve whether the boiler's heater is enabled."""
+        return self._smart_boiler_details.Heater
 
     async def turn_on(self) -> None:
         """Turn the boiler on."""
