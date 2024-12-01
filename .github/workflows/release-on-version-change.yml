@@ -33,7 +33,7 @@ jobs:
         id: extract-version
         if: env.changed == 'true'
         run: |
-          VERSION=$(jq -r '.version' manifest.json)
+          VERSION=$(jq -r '.version' custom_components/eldom/manifest.json)
           echo "Extracted version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
