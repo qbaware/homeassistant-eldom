@@ -52,9 +52,11 @@ jobs:
         if: env.changed == 'true'
         run: |
           echo "Generating changelog..."
-          CHANGELOG=$(git log ${{ env.previous_tag }}..HEAD --pretty=format:"- %s (%h)" | sed ':a;N;$!ba;s/\n/\\n/g')
+          CHANGELOG=$(git log ${{ env.previous_tag }}..HEAD --pretty=format:"- %s (%h)")
           echo "Changelog: $CHANGELOG"
-          echo "changelog=$CHANGELOG" >> $GITHUB_ENV
+          echo "changelog<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         if: env.changed == 'true'
