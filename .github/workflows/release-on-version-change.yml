@@ -63,7 +63,7 @@ jobs:
         uses: actions/create-release@v1
         with:
           tag_name: "${{ env.version }}"
-          release_name: "Version ${{ env.version }}"
+          release_name: "${{ env.version }}"
           body: |
             ## Changelog
             ${{ env.changelog }}
