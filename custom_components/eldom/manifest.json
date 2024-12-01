@@ -11,5 +11,5 @@
   "requirements": ["pyeldom==0.3.0"],
   "ssdp": [],
   "zeroconf": [],
-  "version": "2.2.4"
+  "version": "2.2.5"
 }
