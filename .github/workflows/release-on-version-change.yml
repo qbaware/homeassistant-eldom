@@ -1,0 +1,73 @@
+name: Release on Version Change
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js (if needed for JSON processing)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Detect changes to manifest.json
+        id: detect-changes
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q "manifest.json"; then
+            echo "manifest.json was modified."
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "manifest.json was not modified."
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+
+      - name: Extract new version
+        id: extract-version
+        if: env.changed == 'true'
+        run: |
+          VERSION=$(jq -r '.version' manifest.json)
+          echo "Extracted version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      - name: Get previous tag
+        id: previous-tag
+        if: env.changed == 'true'
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^)
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+      - name: Generate changelog
+        id: generate-changelog
+        if: env.changed == 'true'
+        run: |
+          echo "Generating changelog..."
+          CHANGELOG=$(git log ${{ env.previous_tag }}..HEAD --pretty=format:"- %s (%h)")
+          echo "Changelog: $CHANGELOG"
+          echo "changelog=$CHANGELOG" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        if: env.changed == 'true'
+        uses: actions/create-release@v1
+        with:
+          tag_name: "${{ env.version }}"
+          release_name: "Version ${{ env.version }}"
+          body: |
+            ## Changelog
+            ${{ env.changelog }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log no release
+        if: env.changed == 'false'
+        run: echo "No changes to manifest.json. Skipping release creation."
