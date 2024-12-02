@@ -1,4 +1,4 @@
-"""Eldom objects."""
+"""Eldom boiler objects."""
 
 from abc import ABC, abstractmethod
 import logging
