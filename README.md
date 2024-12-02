@@ -23,6 +23,8 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - `Eco` (corresponds to "Smart")
   - `High Demand` (corresponds to "Study")
   - `Off`
+- Set target temperature
+- Display current temperature
 - Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
 - Display sensors
   - Heater is currently on/off
@@ -37,12 +39,22 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - `Eco` (corresponds to "Smart")
   - `High Demand` (corresponds to "Study")
   - `Off`
+- Set target temperature
+- Display current temperature
 - Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
 - Display sensors
   - Heater is currently on/off
   - Day energy consumption
   - Night energy consumption
   - Saved energy
+
+#### (Experimental) Convector Heaters
+
+- Operational mode selection
+  - `Heat`
+  - `Off`
+- Set target temperature
+- Display current temperature
 
 ### Showcase
 
