@@ -48,7 +48,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Night energy consumption
   - Saved energy
 
-#### (Experimental) Convector Heaters
+#### (Experimental) Convector heaters
 
 - Operational mode selection
   - `Heat`
