@@ -12,10 +12,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DEVICE_TYPE_FLAT_BOILER, DEVICE_TYPE_SMART_BOILER, DOMAIN
 from .coordinator import EldomCoordinator
-from .eldom_boiler import OPERATION_MODES, EldomBoiler
+from .eldom_boiler import EldomBoiler
 from .models import EldomData
 
-REQUIRED_OPERATION_MODE_FOR_BOOST = OPERATION_MODES[2]
 SWITCH_NAME = "Powerful"
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,14 +90,7 @@ class EldomBoilerPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
         return self._eldom_boiler.powerful_enabled
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn powerful on."""
-        eco_mode_enabled = (
-            self._eldom_boiler.current_operation == REQUIRED_OPERATION_MODE_FOR_BOOST
-        )
-        if not eco_mode_enabled:
-            _LOGGER.warning("Powerful mode can only be turned on when in ECO mode")
-            return
-
+        """Turn powerful mode on."""
         await self._eldom_boiler.enable_powerful_mode()
         self.schedule_update_ha_state()
 

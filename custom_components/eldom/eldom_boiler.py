@@ -250,6 +250,16 @@ class FlatEldomBoiler(EldomBoiler):
 
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
+        required_mode_enabled = self.current_operation in (
+            OPERATION_MODES[1],
+            OPERATION_MODES[2],
+        )
+        if not required_mode_enabled:
+            _LOGGER.warning(
+                "Powerful mode can only be turned on when in Eco or Electric mode"
+            )
+            return
+
         self._flat_boiler_details.HasBoost = True
 
         await self._eldom_client.set_flat_boiler_powerful_mode_on(self.device_id)
@@ -385,6 +395,11 @@ class SmartEldomBoiler(EldomBoiler):
 
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
+        required_mode_enabled = self.current_operation in (OPERATION_MODES[2],)
+        if not required_mode_enabled:
+            _LOGGER.warning("Powerful mode can only be turned on when in Eco mode")
+            return
+
         self._smart_boiler_details.BoostHeating = True
 
         await self._eldom_client.set_smart_boiler_powerful_mode_on(self.device_id)
