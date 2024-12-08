@@ -17,6 +17,7 @@ from .coordinator import EldomCoordinator
 from .models import EldomData
 
 PLATFORMS: list[Platform] = [
+    Platform.CLIMATE,
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.WATER_HEATER,
