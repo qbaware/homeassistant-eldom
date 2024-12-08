@@ -5,24 +5,24 @@ from __future__ import annotations
 import logging
 
 from eldom.client import Client as EldomClient
-import requests
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
 
 from .const import API_BASE_URL, DOMAIN
 from .coordinator import EldomCoordinator
 from .models import EldomData
 
-_LOGGER = logging.getLogger(__name__)
-
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.WATER_HEATER,
 ]
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -37,10 +37,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         await api_client.login(email, password)
-        _LOGGER.info("Successfully logged in to Eldom API")
-    except requests.exceptions.HTTPError as e:
-        _LOGGER.error("Failed to login to Eldom API: %s", e)
-        return False
+        await api_client.get_devices()  # NOTE: This is needed since currently the login API does not throw an error if the credentials are invalid: https://github.com/qbaware/homeassistant-eldom/issues/27
+        _LOGGER.info("Successfully authenticated with Eldom API")
+    except Exception as e:
+        _LOGGER.error("Unexpected exception while authenticating with Eldom API: %s", e)
+        raise ConfigEntryNotReady(
+            f"Unexpected exception while authenticating with Eldom API: {e}"
+        ) from e
 
     coordinator = EldomCoordinator(hass, api_client)
 
