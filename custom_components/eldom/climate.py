@@ -1,4 +1,4 @@
-"""Platform for Eldom water heater integration."""
+"""Platform for Eldom convector heater integration."""
 
 import logging
 from typing import Any
@@ -67,7 +67,7 @@ class EldomConvectorHeaterEntity(ClimateEntity, CoordinatorEntity):
     def __init__(
         self, convector_heater: EldomConvectorHeater, coordinator: EldomCoordinator
     ) -> None:
-        """Initialize an Eldom water heater."""
+        """Initialize an Eldom convector heater."""
         super().__init__(coordinator)
 
         self._convector_heater = convector_heater
