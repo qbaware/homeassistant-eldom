@@ -33,17 +33,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
 
-    session = aiohttp_client.async_get_clientsession(hass)
+    session = aiohttp_client.async_create_clientsession(hass)
     api_client = EldomClient(base_url, session)
 
     try:
         await api_client.login(email, password)
         await api_client.get_devices()  # NOTE: This is needed since currently the login API does not throw an error if the credentials are invalid: https://github.com/qbaware/homeassistant-eldom/issues/27
-        _LOGGER.info("Successfully authenticated with Eldom API")
+        _LOGGER.info("Successfully authenticated with Eldom API with '%s'", email)
     except Exception as e:
-        _LOGGER.error("Unexpected exception while authenticating with Eldom API: %s", e)
+        _LOGGER.error(
+            "Unexpected exception while authenticating with Eldom API for '%s': %s",
+            email,
+            e,
+        )
         raise ConfigEntryNotReady(
-            f"Unexpected exception while authenticating with Eldom API: {e}"
+            f"Unexpected exception while authenticating with Eldom API for '{email}': {e}"
         ) from e
 
     coordinator = EldomCoordinator(hass, api_client)

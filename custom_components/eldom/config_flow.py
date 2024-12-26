@@ -34,14 +34,20 @@ class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, email: str, password: str
     ) -> str | None:
         """Validate the credentials. Return an error string, or None if successful."""
-        session = aiohttp_client.async_get_clientsession(self.hass)
+        session = aiohttp_client.async_create_clientsession(self.hass)
         client: EldomClient = EldomClient(API_BASE_URL, session)
 
         try:
             await client.login(email, password)
-        except Exception as e:
-            _LOGGER.exception("Failed to login to Eldom API")
-            return e
+            await client.get_devices()
+            _LOGGER.info(
+                "Successfully authenticated config flow with Eldom API with '%s'", email
+            )
+        except Exception:
+            _LOGGER.exception(
+                "Config flow failed to login to Eldom API with '%s'", email
+            )
+            return "Authentication failed. Please check your credentials."
 
         return None
 
@@ -52,8 +58,12 @@ class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             unique_id = user_input[CONF_EMAIL].lower()
+            _LOGGER.debug("Registering user with unique ID: '%s'", unique_id)
             await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
+            _LOGGER.debug(
+                "Successfully configured user with unique ID: '%s'", unique_id
+            )
 
             error = await self._async_validate_credentials(
                 user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
