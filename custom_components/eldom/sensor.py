@@ -2,7 +2,11 @@
 
 import logging
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant, callback
@@ -121,6 +125,11 @@ class EldomBoilerDayEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
         return SensorDeviceClass.ENERGY
 
     @property
+    def state_class(self) -> SensorStateClass:
+        """Return the state class of the sensor."""
+        return SensorStateClass.TOTAL_INCREASING
+
+    @property
     def native_unit_of_measurement(self) -> str:
         """Return the unit of measurement."""
         return UnitOfEnergy.KILO_WATT_HOUR
@@ -177,6 +186,11 @@ class EldomBoilerNightEnergyConsumptionSensor(SensorEntity, CoordinatorEntity):
     def device_class(self) -> SensorDeviceClass:
         """Return the device class of the sensor."""
         return SensorDeviceClass.ENERGY
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """Return the state class of the sensor."""
+        return SensorStateClass.TOTAL_INCREASING
 
     @property
     def native_unit_of_measurement(self) -> str:
