@@ -27,9 +27,9 @@ from .eldom_convector import EldomConvectorHeater
 from .models import EldomData
 
 SUPPORT_FLAGS_CLIMATE = (
-    ClimateEntityFeature.TARGET_TEMPERATURE,
-    ClimateEntityFeature.TURN_ON,
-    ClimateEntityFeature.TURN_OFF,
+    ClimateEntityFeature.TARGET_TEMPERATURE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
 )
 
 TEMP_UNIT = UnitOfTemperature.CELSIUS
