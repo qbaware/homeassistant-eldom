@@ -16,7 +16,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
 
 ### Supported devices
 
-#### Flat boilers
+#### 1. Flat boilers
 
 - Operational mode selection
   - `Electric` (corresponds to "Heating")
@@ -32,7 +32,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Night energy consumption
   - Saved energy
 
-#### Smart boilers
+#### 2. Smart boilers
 
 - Operational mode selection
   - `Electric` (corresponds to "Heating")
@@ -48,7 +48,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Night energy consumption
   - Saved energy
 
-#### (Experimental) Convector heaters
+#### 3. Convector heaters
 
 - Operational mode selection
   - `Heat`
