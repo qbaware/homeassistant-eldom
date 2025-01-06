@@ -4,7 +4,7 @@ Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assi
 
 ![eldom-integration](https://github.com/user-attachments/assets/d058d86b-0796-4d2f-b686-e9d4312ecd76)
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/danielgospodinow)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/danielgospodinow), or you can just *Star* the repository. I'd love that too. :smile:
 
 ---
 
