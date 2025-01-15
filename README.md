@@ -1,3 +1,7 @@
+[![Discord](https://img.shields.io/discord/1312381782942810192?logo=discord)](https://discord.gg/4sRmgb9Vph)
+
+---
+
 # Eldom Integration For Home Assistant
 
 Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assistant and operate them via Eldom's Cloud APIs with [pyeldom](https://github.com/qbaware/pyeldom).
