@@ -1,4 +1,4 @@
-name: Release on Version Change
+name: release-on-version-change
 
 on:
   push:
