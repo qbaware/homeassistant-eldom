@@ -1,4 +1,5 @@
 [![Discord](https://img.shields.io/discord/1312381782942810192?logo=discord&labelColor=white&label=Discord)](https://discord.gg/4sRmgb9Vph)
+[![hassfest](https://github.com/qbaware/homeassistant-eldom/actions/workflows/hassfest-validation.yaml/badge.svg)](https://github.com/qbaware/homeassistant-eldom/actions/workflows/hassfest-validation.yaml)
 
 ---
 
