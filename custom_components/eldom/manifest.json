@@ -10,6 +10,6 @@
   "issue_tracker": "https://github.com/qbaware/homeassistant-eldom/issues",
   "requirements": ["pyeldom==0.4.1"],
   "ssdp": [],
-  "version": "3.2.1",
+  "version": "3.2.2",
   "zeroconf": []
 }
