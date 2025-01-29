@@ -80,6 +80,10 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
 5. After the installation, you need to restart Home Assistant.
 6. Now, you can proceed with [Usage](#usage).
 
+I've made a video tutorial on YouTube on how to do all this:
+
+[![Watch the video](https://img.youtube.com/vi/57qsCXNVMMA/hqdefault.jpg)](https://youtu.be/57qsCXNVMMA)
+
 ### Custom components
 
 1. Download or clone the integration to your local machine.
