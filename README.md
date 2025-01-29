@@ -72,6 +72,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
 
 ### HACS Installation
 
+0. Install HACS if it's not already installed. Look at [this](https://www.youtube.com/watch?v=0hDyVoDGFbc) video.
 1. Open HACS.
 2. Select `Integrations`, then select the 3-dots in the upper-right corner, then select `Custom Repositories`.
 3. Put the reposity URL in the `Repository` field, then select `Integration` in the `Category` dropdown list and click `Add`.
