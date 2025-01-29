@@ -70,7 +70,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
 
 ## Installation
 
-### HACS Installation
+### HACS Installation (Recommended)
 
 0. Install HACS if it's not already installed. Look at [this](https://www.youtube.com/watch?v=0hDyVoDGFbc) video.
 1. Open HACS.
