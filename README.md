@@ -22,6 +22,8 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
 
 ### Supported devices
 
+Currently, there's only support for devices that are managed by the `My Eldom` app (or `myeldom.com`). The devices that are managed via the `Eldom` app (or `iot.myeldom.com`) are NOT supported.
+
 #### 1. Flat boilers
 
 - Operational mode selection
