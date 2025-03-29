@@ -98,6 +98,37 @@ I've made a video tutorial on YouTube on how to do all this:
 - After installation, go to `Settings > Devices & services > Add integration` and search for `Eldom`.
 - Provide an Eldom account `email` and `password` and click `Submit`.
 
+## Custom UI Card
+
+If you find the default card boring, you can try out this custom one.
+
+![image](https://github.com/user-attachments/assets/623fef6c-1c99-4ec2-ae4e-e9db7400e784)
+
+<details>
+  <summary>YAML</summary>
+  
+  ```yaml
+  features:
+    - type: target-temperature
+    - type: water-heater-operation-modes
+      operation_modes:
+        - "off"
+        - eco
+        - electric
+        - high_demand
+  type: tile
+  entity: water_heater.flat_boiler_edab63cb2b9c
+  color: primary
+  name: Flat Boiler
+  hide_state: false
+  show_entity_picture: false
+  vertical: true
+  state_content:
+    - state
+    - last-changed
+  ```
+</details>
+
 ## Community
 
 For additional questions, you can head over to our [Discord channel](https://discord.gg/4sRmgb9Vph).
