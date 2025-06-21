@@ -98,6 +98,10 @@ class EldomBoiler(ABC):
         """Retrieve whether the boiler's heater is enabled."""
 
     @abstractmethod
+    def energy_usage_reset_date(self) -> str:
+        """Retrieve the date when the energy usage was last reset."""
+
+    @abstractmethod
     async def turn_on(self) -> None:
         """Turn the boiler on."""
 
@@ -116,6 +120,10 @@ class EldomBoiler(ABC):
     @abstractmethod
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
+
+    @abstractmethod
+    async def reset_energy_usage(self) -> None:
+        """Reset the energy usage of the boiler."""
 
 
 class FlatEldomBoiler(EldomBoiler):
@@ -219,6 +227,11 @@ class FlatEldomBoiler(EldomBoiler):
         """Retrieve whether the boiler's heater is enabled."""
         return self._flat_boiler_details.PowerFlag != 0
 
+    @property
+    def energy_usage_reset_date(self) -> str:
+        """Retrieve the date when the energy usage was last reset."""
+        return self._flat_boiler_details.EnergyDate
+
     async def turn_on(self) -> None:
         """Turn the boiler on."""
         await self.set_operation_mode(STATE_ECO)
@@ -263,6 +276,14 @@ class FlatEldomBoiler(EldomBoiler):
         self._flat_boiler_details.HasBoost = True
 
         await self._eldom_client.set_flat_boiler_powerful_mode_on(self.device_id)
+
+    async def reset_energy_usage(self) -> None:
+        """Reset the energy usage of the boiler."""
+        self._flat_boiler_details.EnergyD = 0.0
+        self._flat_boiler_details.EnergyN = 0.0
+        self._flat_boiler_details.SavedEnergy = 0
+
+        await self._eldom_client.reset_flat_boiler_energy_usage(self.device_id)
 
 
 class SmartEldomBoiler(EldomBoiler):
@@ -364,6 +385,11 @@ class SmartEldomBoiler(EldomBoiler):
         """Retrieve whether the boiler's heater is enabled."""
         return self._smart_boiler_details.Heater
 
+    @property
+    def energy_usage_reset_date(self) -> str:
+        """Retrieve the date when the energy usage was last reset."""
+        return self._smart_boiler_details.EnergyDate
+
     async def turn_on(self) -> None:
         """Turn the boiler on."""
         await self.set_operation_mode(STATE_ECO)
@@ -403,3 +429,11 @@ class SmartEldomBoiler(EldomBoiler):
         self._smart_boiler_details.BoostHeating = True
 
         await self._eldom_client.set_smart_boiler_powerful_mode_on(self.device_id)
+
+    async def reset_energy_usage(self) -> None:
+        """Reset the energy usage of the boiler."""
+        self._smart_boiler_details.EnergyD = 0.0
+        self._smart_boiler_details.EnergyN = 0.0
+        self._smart_boiler_details.SavedEnergy = 0
+
+        await self._eldom_client.reset_smart_boiler_energy_usage(self.device_id)
