@@ -16,7 +16,9 @@ Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assi
 
 ## Supported devices
 
-Currently, there's only support for devices that are managed by the `My Eldom` app (or `myeldom.com`). The devices that are managed via the `Eldom` app (or `iot.myeldom.com`) are NOT supported.
+Currently, there's only support for devices that are managed by the `My Eldom` app (or the `myeldom.com` website). 
+
+Devices that are managed via the `Eldom` app (or the `iot.myeldom.com` website) are NOT supported yet. It's being worked upon, though, in https://github.com/qbaware/homeassistant-eldom/issues/35.
 
 ## Features
 
