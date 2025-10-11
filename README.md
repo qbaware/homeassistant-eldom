@@ -14,15 +14,15 @@ Connect your [Eldom](https://eldominvest.com/en/index.html) devices to Home Assi
 
 ---
 
+## Supported devices
+
+Currently, there's only support for devices that are managed by the `My Eldom` app (or `myeldom.com`). The devices that are managed via the `Eldom` app (or `iot.myeldom.com`) are NOT supported.
+
 ## Features
 
 This integration allows you to control Eldom devices via Home Assistant.
 
 Note that there's only one way to control your Eldom devices - via their Cloud APIs. There's no support for local network control.
-
-### Supported devices
-
-Currently, there's only support for devices that are managed by the `My Eldom` app (or `myeldom.com`). The devices that are managed via the `Eldom` app (or `iot.myeldom.com`) are NOT supported.
 
 #### 1. Flat boilers
 
