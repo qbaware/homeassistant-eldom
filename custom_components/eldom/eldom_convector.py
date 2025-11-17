@@ -136,7 +136,7 @@ class EldomConvectorHeater:
 
         self._convector_heater_details.State = operation_mode_id
 
-        await self._eldom_client.set_convector_heater_state(
+        await self._eldom_client.convector_heater.set_convector_heater_state(
             self.device_id, operation_mode_id
         )
 
@@ -144,7 +144,7 @@ class EldomConvectorHeater:
         """Set the temperature of the heater."""
         self._convector_heater_details.SetTemp = temperature
 
-        await self._eldom_client.set_convector_heater_temperature(
+        await self._eldom_client.convector_heater.set_convector_heater_temperature(
             self.device_id, temperature
         )
 

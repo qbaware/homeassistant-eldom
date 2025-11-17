@@ -249,7 +249,7 @@ class FlatEldomBoiler(EldomBoiler):
 
         self._flat_boiler_details.State = operation_mode_id
 
-        await self._eldom_client.set_flat_boiler_state(
+        await self._eldom_client.flat_boiler.set_flat_boiler_state(
             self.device_id, operation_mode_id
         )
 
@@ -257,7 +257,7 @@ class FlatEldomBoiler(EldomBoiler):
         """Set the temperature of the boiler."""
         self._flat_boiler_details.SetTemp = temperature
 
-        await self._eldom_client.set_flat_boiler_temperature(
+        await self._eldom_client.flat_boiler.set_flat_boiler_temperature(
             self.device_id, temperature
         )
 
@@ -275,7 +275,9 @@ class FlatEldomBoiler(EldomBoiler):
 
         self._flat_boiler_details.HasBoost = True
 
-        await self._eldom_client.set_flat_boiler_powerful_mode_on(self.device_id)
+        await self._eldom_client.flat_boiler.set_flat_boiler_powerful_mode_on(
+            self.device_id
+        )
 
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
@@ -283,7 +285,9 @@ class FlatEldomBoiler(EldomBoiler):
         self._flat_boiler_details.EnergyN = 0.0
         self._flat_boiler_details.SavedEnergy = 0
 
-        await self._eldom_client.reset_flat_boiler_energy_usage(self.device_id)
+        await self._eldom_client.flat_boiler.reset_flat_boiler_energy_usage(
+            self.device_id
+        )
 
 
 class SmartEldomBoiler(EldomBoiler):
@@ -407,7 +411,7 @@ class SmartEldomBoiler(EldomBoiler):
 
         self._smart_boiler_details.State = operation_mode_id
 
-        await self._eldom_client.set_smart_boiler_state(
+        await self._eldom_client.smart_boiler.set_smart_boiler_state(
             self.device_id, operation_mode_id
         )
 
@@ -415,7 +419,7 @@ class SmartEldomBoiler(EldomBoiler):
         """Set the temperature of the boiler."""
         self._smart_boiler_details.SetTemp = temperature
 
-        await self._eldom_client.set_smart_boiler_temperature(
+        await self._eldom_client.smart_boiler.set_smart_boiler_temperature(
             self.device_id, temperature
         )
 
@@ -428,7 +432,9 @@ class SmartEldomBoiler(EldomBoiler):
 
         self._smart_boiler_details.BoostHeating = True
 
-        await self._eldom_client.set_smart_boiler_powerful_mode_on(self.device_id)
+        await self._eldom_client.smart_boiler.set_smart_boiler_powerful_mode_on(
+            self.device_id
+        )
 
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
@@ -436,4 +442,6 @@ class SmartEldomBoiler(EldomBoiler):
         self._smart_boiler_details.EnergyN = 0.0
         self._smart_boiler_details.SavedEnergy = 0
 
-        await self._eldom_client.reset_smart_boiler_energy_usage(self.device_id)
+        await self._eldom_client.smart_boiler.reset_smart_boiler_energy_usage(
+            self.device_id
+        )
