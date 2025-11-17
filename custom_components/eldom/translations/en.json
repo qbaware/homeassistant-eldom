@@ -11,10 +11,10 @@
         "step": {
             "user": {
                 "data": {
-                    "email": "Email",
                     "host": "Host",
                     "password": "Password",
-                    "username": "Username"
+                    "username": "Username",
+                    "api": "Eldom API"
                 }
             }
         }

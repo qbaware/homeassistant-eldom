@@ -3,19 +3,11 @@
 from datetime import timedelta
 import logging
 
-from eldom.client import Client as EldomClient
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import (
-    DEVICE_TYPE_CONVECTOR_HEATER,
-    DEVICE_TYPE_FLAT_BOILER,
-    DEVICE_TYPE_SMART_BOILER,
-    DOMAIN,
-)
-from .eldom_boiler import FlatEldomBoiler, SmartEldomBoiler
-from .eldom_convector import EldomConvectorHeater
+from .const import DOMAIN
+from .eldom_client import EldomClientWrapper
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +15,11 @@ _LOGGER = logging.getLogger(__name__)
 class EldomCoordinator(DataUpdateCoordinator):
     """Eldom coordinator."""
 
-    def __init__(self, hass: HomeAssistant, api: EldomClient) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        eldom_wrapper_client: EldomClientWrapper,
+    ) -> None:
         """Initialize my coordinator."""
         super().__init__(
             hass,
@@ -31,40 +27,9 @@ class EldomCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=30),
         )
-        self.api = api
+        self.eldom_wrapper_client = eldom_wrapper_client
 
     async def _async_update_data(self) -> dict:
-        """Fetch data from API endpoint."""
-        devices = await self.api.get_devices()
+        """Fetch data from Eldom."""
 
-        flat_boilers: dict[str, FlatEldomBoiler] = {
-            device.id: FlatEldomBoiler(
-                device.id, await self.api.get_flat_boiler_status(device.id), self.api
-            )
-            for device in devices
-            if device.deviceType == DEVICE_TYPE_FLAT_BOILER
-        }
-
-        smart_boilers: dict[str, SmartEldomBoiler] = {
-            device.id: SmartEldomBoiler(
-                device.id, await self.api.get_smart_boiler_status(device.id), self.api
-            )
-            for device in devices
-            if device.deviceType == DEVICE_TYPE_SMART_BOILER
-        }
-
-        convector_heaters: dict[str, EldomConvectorHeater] = {
-            device.id: EldomConvectorHeater(
-                device.id,
-                await self.api.get_convector_heater_status(device.id),
-                self.api,
-            )
-            for device in devices
-            if device.deviceType == DEVICE_TYPE_CONVECTOR_HEATER
-        }
-
-        return {
-            DEVICE_TYPE_FLAT_BOILER: flat_boilers,
-            DEVICE_TYPE_SMART_BOILER: smart_boilers,
-            DEVICE_TYPE_CONVECTOR_HEATER: convector_heaters,
-        }
+        return await self.eldom_wrapper_client.get_devices()

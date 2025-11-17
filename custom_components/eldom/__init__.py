@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import logging
 
-from eldom.client import Client as EldomClient
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
 
-from .const import API_BASE_URL, DOMAIN
+from .const import CONF_API, DOMAIN
 from .coordinator import EldomCoordinator
+from .eldom_client import EldomClientWrapper
 from .models import EldomData
 
 PLATFORMS: list[Platform] = [
@@ -29,33 +28,37 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Eldom from a config entry."""
-
-    base_url = API_BASE_URL
-    email = entry.data[CONF_EMAIL]
-    password = entry.data[CONF_PASSWORD]
-
     session = aiohttp_client.async_create_clientsession(hass)
-    api_client = EldomClient(base_url, session)
 
-    try:
-        await api_client.login(email, password)
-        await api_client.get_devices()  # NOTE: This is needed since currently the login API does not throw an error if the credentials are invalid: https://github.com/qbaware/homeassistant-eldom/issues/27
-        _LOGGER.info("Successfully authenticated with Eldom API with '%s'", email)
-    except Exception as e:
+    username = entry.data[CONF_USERNAME]
+    password = entry.data[CONF_PASSWORD]
+    api = entry.data[CONF_API]
+
+    client = EldomClientWrapper(session, username, password, api)
+
+    await client.login()
+    connected = await client.is_connected()
+    if connected is False:
         _LOGGER.error(
-            "Unexpected exception while authenticating with Eldom API for '%s': %s",
-            email,
-            e,
+            "Unexpected exception while authenticating with Eldom API '%s' for '%s'",
+            api,
+            username,
         )
         raise ConfigEntryNotReady(
-            f"Unexpected exception while authenticating with Eldom API for '{email}': {e}"
-        ) from e
+            f"Unexpected exception while authenticating with Eldom API '{api}' for '{username}'"
+        )
 
-    coordinator = EldomCoordinator(hass, api_client)
+    coordinator = EldomCoordinator(hass, client)
 
-    eldom_data = EldomData(api_client, coordinator)
+    eldom_data = EldomData(coordinator)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = eldom_data
+
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as err:
+        _LOGGER.info("Initial data fetch failed, deferring setup: %s", err)
+        raise ConfigEntryNotReady from err
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

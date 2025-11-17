@@ -16,9 +16,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    DEVICE_TYPE_FLAT_BOILER,
+    DEVICE_TYPE_FLAT_BOILER_ELDOM,
     DEVICE_TYPE_MAPPING,
-    DEVICE_TYPE_SMART_BOILER,
+    DEVICE_TYPE_SMART_BOILER_ELDOM,
     DOMAIN,
     MANUFACTURER_NAME,
 )
@@ -49,14 +49,14 @@ async def async_setup_entry(
     async_add_entities(
         EldomWaterHeaterEntity(flat_boiler, eldom_data.coordinator)
         for flat_boiler in eldom_data.coordinator.data.get(
-            DEVICE_TYPE_FLAT_BOILER
+            DEVICE_TYPE_FLAT_BOILER_ELDOM
         ).values()
     )
 
     async_add_entities(
         EldomWaterHeaterEntity(smart_boiler, eldom_data.coordinator)
         for smart_boiler in eldom_data.coordinator.data.get(
-            DEVICE_TYPE_SMART_BOILER
+            DEVICE_TYPE_SMART_BOILER_ELDOM
         ).values()
     )
 

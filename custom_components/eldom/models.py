@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass
 
-from eldom.client import Client as EldomClient
-
 from .coordinator import EldomCoordinator
 
 
@@ -11,5 +9,4 @@ from .coordinator import EldomCoordinator
 class EldomData:
     """Data for the Eldom integration."""
 
-    api: EldomClient
     coordinator: EldomCoordinator

@@ -5,24 +5,16 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from eldom.client import Client as EldomClient
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers import aiohttp_client
-import homeassistant.helpers.config_validation as cv
 
-from .const import API_BASE_URL, DOMAIN
+from .const import API_CHOICES, CONF_API, DOMAIN, ELDOM_API
+from .eldom_client import EldomClientWrapper
 
 _LOGGER = logging.getLogger(__name__)
-
-USER_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_EMAIL): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-    }
-)
 
 
 class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -31,24 +23,26 @@ class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def _async_validate_credentials(
-        self, email: str, password: str
+        self, username: str, password: str, api: str
     ) -> str | None:
         """Validate the credentials. Return an error string, or None if successful."""
         session = aiohttp_client.async_create_clientsession(self.hass)
-        client: EldomClient = EldomClient(API_BASE_URL, session)
 
-        try:
-            await client.login(email, password)
-            await client.get_devices()
-            _LOGGER.info(
-                "Successfully authenticated config flow with Eldom API with '%s'", email
-            )
-        except Exception:
-            _LOGGER.exception(
-                "Config flow failed to login to Eldom API with '%s'", email
+        client = EldomClientWrapper(session, username, password, api)
+
+        await client.login()
+        connected = await client.is_connected()
+        if connected is False:
+            _LOGGER.error(
+                "Config flow failed to login to Eldom API '%s' with '%s'", api, username
             )
             return "Authentication failed. Please check your credentials."
 
+        _LOGGER.info(
+            "Successfully authenticated config flow with Eldom API '%s' with '%s'",
+            api,
+            username,
+        )
         return None
 
     async def async_step_user(
@@ -57,7 +51,7 @@ class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            unique_id = user_input[CONF_EMAIL].lower()
+            unique_id = f"{user_input[CONF_USERNAME].lower()}-{user_input[CONF_API]}"
             _LOGGER.debug("Registering user with unique ID: '%s'", unique_id)
             await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
@@ -66,11 +60,13 @@ class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
             error = await self._async_validate_credentials(
-                user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
+                user_input[CONF_USERNAME],
+                user_input[CONF_PASSWORD],
+                user_input[CONF_API],
             )
             if error is None:
                 return self.async_create_entry(
-                    title=user_input[CONF_EMAIL], data=user_input
+                    title=user_input[CONF_USERNAME], data=user_input
                 )
 
             errors["base"] = error
@@ -79,8 +75,9 @@ class EldomConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_EMAIL): str,
+                    vol.Required(CONF_USERNAME): str,
                     vol.Required(CONF_PASSWORD): str,
+                    vol.Required(CONF_API, default=ELDOM_API): vol.In(API_CHOICES),
                 }
             ),
             errors=errors,

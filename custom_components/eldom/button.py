@@ -9,7 +9,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DEVICE_TYPE_FLAT_BOILER, DEVICE_TYPE_SMART_BOILER, DOMAIN
+from .const import DEVICE_TYPE_FLAT_BOILER_ELDOM, DEVICE_TYPE_SMART_BOILER_ELDOM, DOMAIN
 from .coordinator import EldomCoordinator
 from .eldom_boiler import EldomBoiler
 from .models import EldomData
@@ -34,14 +34,14 @@ async def async_setup_entry(
     entities_to_add = []
 
     for flat_boiler in eldom_data.coordinator.data.get(
-        DEVICE_TYPE_FLAT_BOILER
+        DEVICE_TYPE_FLAT_BOILER_ELDOM
     ).values():
         entities_to_add.append(
             ResetEnergyUsageButton(flat_boiler, eldom_data.coordinator)
         )
 
     for smart_boiler in eldom_data.coordinator.data.get(
-        DEVICE_TYPE_SMART_BOILER
+        DEVICE_TYPE_SMART_BOILER_ELDOM
     ).values():
         entities_to_add.append(
             ResetEnergyUsageButton(smart_boiler, eldom_data.coordinator)
