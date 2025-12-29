@@ -114,7 +114,7 @@ class EldomClientWrapper:
 
     async def _fetch_iot_eldom_data(self):
         if self.api != IOT_ELDOM_API:
-            return {}
+            return {}, {}
 
         devices = await self.iot_eldom_client.get_devices()
 
