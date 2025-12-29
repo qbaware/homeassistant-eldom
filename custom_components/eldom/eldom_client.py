@@ -8,11 +8,12 @@ from .const import (
     DEVICE_TYPE_CONVECTOR_HEATER_ELDOM,
     DEVICE_TYPE_CONVECTOR_HEATER_IOT_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
+    DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM,
     DEVICE_TYPE_SMART_BOILER_ELDOM,
     ELDOM_API,
     IOT_ELDOM_API,
 )
-from .eldom_boiler import FlatEldomBoiler, SmartEldomBoiler
+from .eldom_boiler import FlatEldomBoiler, SmartEldomBoiler, FlatIoTEldomBoiler
 from .eldom_convector import EldomConvectorHeater, IoTEldomConvectorHeater
 
 
@@ -58,13 +59,17 @@ class EldomClientWrapper:
             eldom_smart_boilers,
             eldom_convector_heaters,
         ) = await self._fetch_eldom_data()
-        iot_eldom_convector_heaters = await self._fetch_iot_eldom_data()
+        (
+            iot_eldom_convector_heaters,
+            iot_eldom_flat_boilers,
+        ) = await self._fetch_iot_eldom_data()
 
         return {
             DEVICE_TYPE_FLAT_BOILER_ELDOM: eldom_flat_boilers,
             DEVICE_TYPE_SMART_BOILER_ELDOM: eldom_smart_boilers,
             DEVICE_TYPE_CONVECTOR_HEATER_ELDOM: eldom_convector_heaters,
             DEVICE_TYPE_CONVECTOR_HEATER_IOT_ELDOM: iot_eldom_convector_heaters,
+            DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM: iot_eldom_flat_boilers,
         }
 
     async def _fetch_eldom_data(self):
@@ -125,4 +130,14 @@ class EldomClientWrapper:
             if device.model == DEVICE_TYPE_CONVECTOR_HEATER_IOT_ELDOM
         }
 
-        return convector_heaters
+        flat_boilers: dict[str, FlatIoTEldomBoiler] = {
+            device.uuid: FlatIoTEldomBoiler(
+                device,
+                await self.iot_eldom_client.flat_boiler.get_flat_boiler_status(device),
+                self.iot_eldom_client,
+            )
+            for device in devices
+            if device.model == DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM
+        }
+
+        return convector_heaters, flat_boilers

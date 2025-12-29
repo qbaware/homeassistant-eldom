@@ -8,8 +8,8 @@
   "homekit": {},
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/qbaware/homeassistant-eldom/issues",
-  "requirements": ["pyeldom==1.0.3"],
+  "requirements": ["pyeldom==2.0.1"],
   "ssdp": [],
-  "version": "5.0.2",
+  "version": "6.0.0",
   "zeroconf": []
 }

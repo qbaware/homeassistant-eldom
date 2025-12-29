@@ -22,7 +22,7 @@ Release [5.0.1](https://github.com/qbaware/homeassistant-eldom/releases/tag/5.0.
 
 Currently, there's primarely support for devices that are managed by the `My Eldom` app (or the `myeldom.com` website).
 
-Devices that are managed via the `Eldom` app (or the `iot.myeldom.com` website) are in experimental support from release [5.0.1](https://github.com/qbaware/homeassistant-eldom/releases/tag/5.0.1).
+Devices that are managed via the `Eldom` app (or the `iot.myeldom.com` website) are in experimental support from release [5.0.1](https://github.com/qbaware/homeassistant-eldom/releases/tag/5.0.1). Some of the devices under experimentation are flat boilers and convector heaters.
 
 ## Features
 

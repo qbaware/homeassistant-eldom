@@ -5,22 +5,36 @@ import logging
 
 from eldom.client import Client as EldomClient
 from eldom.models import FlatBoilerDetails, SmartBoilerDetails
+from ioteldom.client import Client as IoTEldomClient
+from ioteldom.models import (
+    FlatBoilerDetails as IoTFlatBoilerDetails,
+    Device as IoTEldomDevice,
+)
 
 from homeassistant.components.water_heater import (
     STATE_ECO,
     STATE_ELECTRIC,
     STATE_HIGH_DEMAND,
+    STATE_PERFORMANCE,
 )
 from homeassistant.const import STATE_OFF
 
 MAX_TEMP = 75
 MIN_TEMP = 35
 
-OPERATION_MODES = {
+ELDOM_OPERATION_MODES = {
     0: STATE_OFF,
     1: STATE_ELECTRIC,  # Matches: "Heating"
     2: STATE_ECO,  # Matches: "Smart"
     3: STATE_HIGH_DEMAND,  # Matches: "Study"
+}
+
+IOT_ELDOM_OPERATION_MODES = {
+    0: STATE_OFF,
+    2: STATE_PERFORMANCE,  # Matches: "Powerful"
+    4: STATE_HIGH_DEMAND,  # Matches: "Smart"
+    6: STATE_ECO,  # Matches: "Eco"
+    8: STATE_ELECTRIC,  # Matches: "Extra safe"
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -173,7 +187,7 @@ class FlatEldomBoiler(EldomBoiler):
     @property
     def operation_modes(self) -> list[str]:
         """Retrieve the boiler's operation modes. Modes are: Off, Heating, Smart, or Study."""
-        return list(OPERATION_MODES.values())
+        return list(ELDOM_OPERATION_MODES.values())
 
     @property
     def max_temperature(self) -> float:
@@ -220,7 +234,7 @@ class FlatEldomBoiler(EldomBoiler):
     @property
     def current_operation(self) -> str:
         """Return current operation ie. Off, Heating, Smart, or Study."""
-        return OPERATION_MODES.get(self._flat_boiler_details.State, "Unknown")
+        return ELDOM_OPERATION_MODES.get(self._flat_boiler_details.State, "Unknown")
 
     @property
     def heater_enabled(self) -> bool:
@@ -242,10 +256,12 @@ class FlatEldomBoiler(EldomBoiler):
 
     async def set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
-        if operation_mode not in OPERATION_MODES.values():
+        if operation_mode not in ELDOM_OPERATION_MODES.values():
             raise ValueError("Operation mode not supported")
 
-        operation_mode_id = {v: k for k, v in OPERATION_MODES.items()}[operation_mode]
+        operation_mode_id = {v: k for k, v in ELDOM_OPERATION_MODES.items()}[
+            operation_mode
+        ]
 
         self._flat_boiler_details.State = operation_mode_id
 
@@ -264,8 +280,8 @@ class FlatEldomBoiler(EldomBoiler):
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
         required_mode_enabled = self.current_operation in (
-            OPERATION_MODES[1],
-            OPERATION_MODES[2],
+            ELDOM_OPERATION_MODES[1],
+            ELDOM_OPERATION_MODES[2],
         )
         if not required_mode_enabled:
             _LOGGER.warning(
@@ -337,7 +353,7 @@ class SmartEldomBoiler(EldomBoiler):
     @property
     def operation_modes(self) -> list[str]:
         """Retrieve the boiler's operation modes. Modes are: Off, Heating, Smart, or Study."""
-        return list(OPERATION_MODES.values())
+        return list(ELDOM_OPERATION_MODES.values())
 
     @property
     def max_temperature(self) -> float:
@@ -382,7 +398,7 @@ class SmartEldomBoiler(EldomBoiler):
     @property
     def current_operation(self) -> str:
         """Return current operation ie. Off, Heating, Smart, or Study."""
-        return OPERATION_MODES.get(self._smart_boiler_details.State, "Unknown")
+        return ELDOM_OPERATION_MODES.get(self._smart_boiler_details.State, "Unknown")
 
     @property
     def heater_enabled(self) -> bool:
@@ -404,10 +420,12 @@ class SmartEldomBoiler(EldomBoiler):
 
     async def set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
-        if operation_mode not in OPERATION_MODES.values():
+        if operation_mode not in ELDOM_OPERATION_MODES.values():
             raise ValueError("Operation mode not supported")
 
-        operation_mode_id = {v: k for k, v in OPERATION_MODES.items()}[operation_mode]
+        operation_mode_id = {v: k for k, v in ELDOM_OPERATION_MODES.items()}[
+            operation_mode
+        ]
 
         self._smart_boiler_details.State = operation_mode_id
 
@@ -425,7 +443,7 @@ class SmartEldomBoiler(EldomBoiler):
 
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
-        required_mode_enabled = self.current_operation in (OPERATION_MODES[2],)
+        required_mode_enabled = self.current_operation in (ELDOM_OPERATION_MODES[2],)
         if not required_mode_enabled:
             _LOGGER.warning("Powerful mode can only be turned on when in Eco mode")
             return
@@ -444,4 +462,124 @@ class SmartEldomBoiler(EldomBoiler):
 
         await self._eldom_client.smart_boiler.reset_smart_boiler_energy_usage(
             self.device_id
+        )
+
+
+class IoTEldomBoiler(ABC):
+    """A base class representation of an IoT Eldom boiler."""
+
+    @abstractmethod
+    def id(self) -> int:
+        """Retrieve the boiler's ID."""
+
+    @abstractmethod
+    def device_id(self) -> str:
+        """Retrieve the boiler's device ID."""
+
+    @abstractmethod
+    def name(self) -> str:
+        """Retrieve the boiler's name."""
+
+    @abstractmethod
+    def type(self) -> int:
+        """Retrieve the boiler's type."""
+
+    @abstractmethod
+    def operation_modes(self) -> list[str]:
+        """Retrieve the boiler's operation modes. Modes are: Off, Heating, Smart, or Study."""
+
+    @abstractmethod
+    def current_operation(self) -> str:
+        """Return current operation ie. Off, Heating, Smart, or Study."""
+
+    @abstractmethod
+    def current_temperature(self) -> float:
+        """Retrieve the boiler's current temperature."""
+
+    @abstractmethod
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+
+    @abstractmethod
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+
+    @abstractmethod
+    async def set_operation_mode(self, operation_mode: str) -> None:
+        """Set the operation mode of the boiler."""
+
+
+class FlatIoTEldomBoiler(IoTEldomBoiler):
+    """An IoT Eldom flat boiler representation object."""
+
+    def __init__(
+        self,
+        device: IoTEldomDevice,
+        flat_boiler_details: IoTFlatBoilerDetails,
+        eldom_client: IoTEldomClient,
+    ) -> None:
+        """Initialize the flat boiler."""
+        self._device = device
+        self._flat_boiler_details = flat_boiler_details
+        self._eldom_client = eldom_client
+
+    @property
+    def id(self) -> int:
+        """Retrieve the boiler's ID."""
+        return self._device.uuid
+
+    @property
+    def device_id(self) -> str:
+        """Retrieve the boiler's device ID."""
+        return self._device.uuid
+
+    @property
+    def name(self) -> str:
+        """Retrieve the boiler's name."""
+        return f"Convector Heater ({self._device.uuid[-4:]})"
+
+    @property
+    def type(self) -> int:
+        """Retrieve the boiler's type."""
+        return self._device.model
+
+    @property
+    def operation_modes(self) -> list[str]:
+        """Retrieve the boiler's operation modes."""
+        return list(IOT_ELDOM_OPERATION_MODES.values())
+
+    @property
+    def current_operation(self) -> str:
+        """Return current operation ie. Off, Heating, Smart, or Study."""
+        return IOT_ELDOM_OPERATION_MODES.get(
+            int(self._flat_boiler_details.BoilerMode), "Unknown"
+        )
+
+    @property
+    def current_temperature(self) -> float:
+        """Retrieve the boiler's current temperature."""
+        # This calculates the average between the two chambers' temperatures
+        return (self._flat_boiler_details.Tin + self._flat_boiler_details.Tout) / 2
+
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+        await self.set_operation_mode(STATE_ECO)
+
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+        await self.set_operation_mode(STATE_OFF)
+
+    async def set_operation_mode(self, operation_mode: str) -> None:
+        """Set new target operation mode."""
+        if operation_mode not in IOT_ELDOM_OPERATION_MODES.values():
+            raise ValueError("Operation mode not supported")
+
+        operation_mode_id = {v: k for k, v in IOT_ELDOM_OPERATION_MODES.items()}[
+            operation_mode
+        ]
+
+        self._flat_boiler_details.BoilerMode = str(operation_mode_id)
+
+        await self._eldom_client.flat_boiler.set_flat_boiler_state(
+            self.device_id, operation_mode_id
         )
