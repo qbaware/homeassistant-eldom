@@ -536,7 +536,7 @@ class FlatIoTEldomBoiler(IoTEldomBoiler):
     @property
     def name(self) -> str:
         """Retrieve the boiler's name."""
-        return f"Convector Heater ({self._device.uuid[-4:]})"
+        return f"Flat Boiler ({self._device.uuid[-4:]})"
 
     @property
     def type(self) -> int:
@@ -559,7 +559,7 @@ class FlatIoTEldomBoiler(IoTEldomBoiler):
     def current_temperature(self) -> float:
         """Retrieve the boiler's current temperature."""
         # This calculates the average between the two chambers' temperatures
-        return (self._flat_boiler_details.Tin + self._flat_boiler_details.Tout) / 2
+        return (float(self._flat_boiler_details.Tin) + float(self._flat_boiler_details.Tout)) / 2
 
     async def turn_on(self) -> None:
         """Turn the boiler on."""
