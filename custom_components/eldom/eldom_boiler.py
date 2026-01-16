@@ -581,5 +581,5 @@ class FlatIoTEldomBoiler(IoTEldomBoiler):
         self._flat_boiler_details.BoilerMode = str(operation_mode_id)
 
         await self._eldom_client.flat_boiler.set_flat_boiler_state(
-            self.device_id, operation_mode_id
+            self._device, operation_mode_id
         )
