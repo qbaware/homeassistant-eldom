@@ -62,7 +62,20 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Night energy consumption
   - Saved energy
 
-#### 3. Convector heaters
+#### 3. Naturela boilers
+
+- Operational mode selection
+  - `Electric` (corresponds to "On")
+  - `Eco` (corresponds to "Holiday")
+  - `Off`
+- Display current temperature
+- Enable `Powerful mode` switch (only works while the boiler is not off)
+- Display sensors
+  - Heater is currently on/off
+  - Day energy consumption
+  - Night energy consumption
+
+#### 4. Convector heaters
 
 - Operational mode selection
   - `Heat`

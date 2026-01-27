@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import logging
 
 from eldom.client import Client as EldomClient
-from eldom.models import FlatBoilerDetails, SmartBoilerDetails
+from eldom.models import FlatBoilerDetails, NaturelaBoilerDetails, SmartBoilerDetails
 from ioteldom.client import Client as IoTEldomClient
 from ioteldom.models import (
     FlatBoilerDetails as IoTFlatBoilerDetails,
@@ -22,6 +22,9 @@ from homeassistant.const import STATE_OFF
 MAX_TEMP = 75
 MIN_TEMP = 35
 
+NATURELA_MAX_TEMP = 75
+NATURELA_MIN_TEMP = 8
+
 ELDOM_OPERATION_MODES = {
     0: STATE_OFF,
     1: STATE_ELECTRIC,  # Matches: "Heating"
@@ -35,6 +38,12 @@ IOT_ELDOM_OPERATION_MODES = {
     4: STATE_HIGH_DEMAND,  # Matches: "Smart"
     6: STATE_ECO,  # Matches: "Eco"
     8: STATE_ELECTRIC,  # Matches: "Extra safe"
+}
+
+NATURELA_OPERATION_MODES = {
+    0: STATE_OFF,
+    1: STATE_ELECTRIC,  # Matches: "On"
+    2: STATE_ECO,  # Matches: "Holiday"
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -462,6 +471,169 @@ class SmartEldomBoiler(EldomBoiler):
 
         await self._eldom_client.smart_boiler.reset_smart_boiler_energy_usage(
             self.device_id
+        )
+
+
+class NaturelaEldomBoiler(EldomBoiler):
+    """An Eldom Naturela boiler representation object."""
+
+    def __init__(
+        self,
+        id: int,
+        naturela_boiler_details: NaturelaBoilerDetails,
+        eldom_client: EldomClient,
+    ) -> None:
+        """Initialize the Naturela boiler."""
+        self._id = id
+        self._naturela_boiler_details = naturela_boiler_details
+        self._eldom_client = eldom_client
+
+    @property
+    def id(self) -> int:
+        """Retrieve the boiler's ID."""
+        return self._id
+
+    @property
+    def device_id(self) -> str:
+        """Retrieve the boiler's device ID."""
+        return self._naturela_boiler_details.DeviceID
+
+    @property
+    def name(self) -> str:
+        """Retrieve the boiler's name."""
+        return f"Naturela Boiler ({self._naturela_boiler_details.DeviceID[-4:]})"
+
+    @property
+    def type(self) -> int:
+        """Retrieve the boiler's type."""
+        return self._naturela_boiler_details.Type
+
+    @property
+    def software_version(self) -> str:
+        """Retrieve the boiler's software version."""
+        return self._naturela_boiler_details.SoftwareVersion
+
+    @property
+    def hardware_version(self) -> str:
+        """Retrieve the boiler's hardware version."""
+        return self._naturela_boiler_details.HardwareVersion
+
+    @property
+    def operation_modes(self) -> list[str]:
+        """Retrieve the boiler's operation modes. Modes are: Off, On, or Holiday."""
+        return list(NATURELA_OPERATION_MODES.values())
+
+    @property
+    def max_temperature(self) -> float:
+        """Retrieve the boiler's maximum temperature."""
+        return NATURELA_MAX_TEMP
+
+    @property
+    def min_temperature(self) -> float:
+        """Retrieve the boiler's minimum temperature."""
+        return NATURELA_MIN_TEMP
+
+    @property
+    def current_temperature(self) -> float:
+        """Retrieve the boiler's current temperature."""
+        # Calculate the average of the three temperature zones
+        t_top = self._naturela_boiler_details.TTop
+        t_middle = self._naturela_boiler_details.TMiddle
+        t_bottom = self._naturela_boiler_details.TBottom
+        return (t_top + t_middle + t_bottom) / 3
+
+    @property
+    def target_temperature(self) -> float:
+        """Retrieve the boiler's target temperature."""
+        return self._naturela_boiler_details.ElSetTemp
+
+    @property
+    def powerful_enabled(self) -> bool:
+        """Retrieve whether the boiler's powerful mode is enabled."""
+        return self._naturela_boiler_details.Heater
+
+    @property
+    def day_energy_consumption(self) -> float:
+        """Retrieve the boiler's day energy consumption."""
+        return self._naturela_boiler_details.EnergyD
+
+    @property
+    def night_energy_consumption(self) -> float:
+        """Retrieve the boiler's night energy consumption."""
+        return self._naturela_boiler_details.EnergyN
+
+    @property
+    def saved_energy(self) -> float:
+        """Retrieve the boiler's saved energy."""
+        # Naturela boilers don't track saved energy
+        return 0
+
+    @property
+    def current_operation(self) -> str:
+        """Return current operation ie. Off, On, or Holiday."""
+        return NATURELA_OPERATION_MODES.get(
+            self._naturela_boiler_details.State, "Unknown"
+        )
+
+    @property
+    def heater_enabled(self) -> bool:
+        """Retrieve whether the boiler's heater is enabled."""
+        return self._naturela_boiler_details.Heater
+
+    @property
+    def energy_usage_reset_date(self) -> str:
+        """Retrieve the date when the energy usage was last reset."""
+        return self._naturela_boiler_details.EnergyDate
+
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+        await self.set_operation_mode(STATE_ELECTRIC)
+
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+        await self.set_operation_mode(STATE_OFF)
+
+    async def set_operation_mode(self, operation_mode: str) -> None:
+        """Set new target operation mode."""
+        if operation_mode not in NATURELA_OPERATION_MODES.values():
+            raise ValueError("Operation mode not supported")
+
+        operation_mode_id = {v: k for k, v in NATURELA_OPERATION_MODES.items()}[
+            operation_mode
+        ]
+
+        self._naturela_boiler_details.State = operation_mode_id
+
+        await self._eldom_client.naturela_boiler.set_naturela_boiler_state(
+            self.device_id, operation_mode_id
+        )
+
+    async def set_temperature(self, temperature: float) -> None:
+        """Set the temperature of the boiler."""
+        # Naturela boilers don't support setting temperature via API yet
+        _LOGGER.warning(
+            "Setting temperature is not supported for Naturela boilers via API"
+        )
+
+    async def enable_powerful_mode(self) -> None:
+        """Enable the boiler's powerful mode."""
+        if self.current_operation == STATE_OFF:
+            _LOGGER.warning(
+                "Powerful mode can only be turned on when the boiler is not off"
+            )
+            return
+
+        self._naturela_boiler_details.Heater = True
+
+        await self._eldom_client.naturela_boiler.set_naturela_boiler_powerful_mode_on(
+            self.device_id
+        )
+
+    async def reset_energy_usage(self) -> None:
+        """Reset the energy usage of the boiler."""
+        # Naturela boilers don't support resetting energy usage via API yet
+        _LOGGER.warning(
+            "Resetting energy usage is not supported for Naturela boilers via API"
         )
 
 

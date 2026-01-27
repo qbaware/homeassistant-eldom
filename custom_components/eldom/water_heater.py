@@ -18,6 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
     DEVICE_TYPE_MAPPING,
+    DEVICE_TYPE_NATURELA_BOILER_ELDOM,
     DEVICE_TYPE_SMART_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM,
     DOMAIN,
@@ -31,6 +32,10 @@ SUPPORT_FLAGS_ELDOM_HEATER = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
     | WaterHeaterEntityFeature.OPERATION_MODE
     | WaterHeaterEntityFeature.ON_OFF
+)
+
+SUPPORT_FLAGS_ELDOM_HEATER_NO_TEMP = (
+    WaterHeaterEntityFeature.OPERATION_MODE | WaterHeaterEntityFeature.ON_OFF
 )
 
 SUPPORT_FLAGS_IOT_ELDOM_HEATER = (
@@ -62,6 +67,13 @@ async def async_setup_entry(
         EldomWaterHeaterEntity(smart_boiler, eldom_data.coordinator)
         for smart_boiler in eldom_data.coordinator.data.get(
             DEVICE_TYPE_SMART_BOILER_ELDOM
+        ).values()
+    )
+
+    async_add_entities(
+        EldomWaterHeaterEntity(naturela_boiler, eldom_data.coordinator)
+        for naturela_boiler in eldom_data.coordinator.data.get(
+            DEVICE_TYPE_NATURELA_BOILER_ELDOM
         ).values()
     )
 
@@ -116,6 +128,8 @@ class EldomWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
     @property
     def supported_features(self) -> WaterHeaterEntityFeature:
         """Return the list of supported features."""
+        if self._eldom_boiler.type == DEVICE_TYPE_NATURELA_BOILER_ELDOM:
+            return SUPPORT_FLAGS_ELDOM_HEATER_NO_TEMP
         return SUPPORT_FLAGS_ELDOM_HEATER
 
     @property
