@@ -7,9 +7,9 @@ from eldom.client import Client as EldomClient
 from eldom.models import FlatBoilerDetails, NaturelaBoilerDetails, SmartBoilerDetails
 from ioteldom.client import Client as IoTEldomClient
 from ioteldom.models import (
-    FlatBoilerDetails as IoTFlatBoilerDetails,
     Device as IoTEldomDevice,
 )
+from .iot_models_override import FlatBoilerDetails as IoTFlatBoilerDetails
 
 from homeassistant.components.water_heater import (
     STATE_ECO,
@@ -780,6 +780,31 @@ class FlatIoTEldomBoiler(IoTEldomBoiler):
     def powerful_target_temp(self) -> float:
         """Retrieve the Powerful mode target temperature."""
         return float(self._flat_boiler_details.Powerfull_Tset)
+
+    @property
+    def extra_save_rate(self) -> int:
+        """Retrieve the ExtraSave tariff zone count (2, 3, or 4)."""
+        return int(self._flat_boiler_details.ExtraSaveRate) if self._flat_boiler_details.ExtraSaveRate else 0
+
+    @property
+    def ready_time(self) -> str:
+        """Retrieve the time when the boiler will be ready."""
+        return self._flat_boiler_details.ReadyTime
+
+    @property
+    def remain_time(self) -> str:
+        """Retrieve the remaining time for the current mode."""
+        return self._flat_boiler_details.RemainTime
+
+    @property
+    def delayed_start_time(self) -> str:
+        """Retrieve the delayed start time."""
+        return self._flat_boiler_details.DelayedStartTime
+
+    @property
+    def smart_end_time(self) -> str:
+        """Retrieve the Smart mode end time."""
+        return self._flat_boiler_details.SmartEndTime
 
     async def turn_on(self) -> None:
         """Turn the boiler on."""
