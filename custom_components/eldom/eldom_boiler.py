@@ -1,6 +1,7 @@
 """Eldom boiler objects."""
 
 from abc import ABC, abstractmethod
+import asyncio
 import logging
 
 from eldom.client import Client as EldomClient
@@ -143,6 +144,10 @@ class EldomBoiler(ABC):
     @abstractmethod
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
+
+    @abstractmethod
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
 
     @abstractmethod
     async def reset_energy_usage(self) -> None:
@@ -304,6 +309,13 @@ class FlatEldomBoiler(EldomBoiler):
             self.device_id
         )
 
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
+
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
         self._flat_boiler_details.EnergyD = 0.0
@@ -462,6 +474,13 @@ class SmartEldomBoiler(EldomBoiler):
         await self._eldom_client.smart_boiler.set_smart_boiler_powerful_mode_on(
             self.device_id
         )
+
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
 
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
@@ -658,6 +677,13 @@ class NaturelaEldomBoiler(EldomBoiler):
         await self._eldom_client.naturela_boiler.set_naturela_boiler_powerful_mode_on(
             self.device_id
         )
+
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
 
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
