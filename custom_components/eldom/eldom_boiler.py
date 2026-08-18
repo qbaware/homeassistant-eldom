@@ -8,8 +8,8 @@ from eldom.client import Client as EldomClient
 from eldom.models import FlatBoilerDetails, NaturelaBoilerDetails, SmartBoilerDetails
 from ioteldom.client import Client as IoTEldomClient
 from ioteldom.models import (
-    FlatBoilerDetails as IoTFlatBoilerDetails,
     Device as IoTEldomDevice,
+    FlatBoilerDetails as IoTFlatBoilerDetails,
 )
 
 from homeassistant.components.water_heater import (
@@ -787,6 +787,21 @@ class FlatIoTEldomBoiler(IoTEldomBoiler):
         """Retrieve the boiler's current temperature."""
         # This calculates the average between the two chambers' temperatures
         return (float(self._flat_boiler_details.Tin) + float(self._flat_boiler_details.Tout)) / 2
+
+    @property
+    def chamber1_temperature(self) -> float:
+        """Retrieve the first chamber temperature (Tout)."""
+        return float(self._flat_boiler_details.Tout)
+
+    @property
+    def chamber2_temperature(self) -> float:
+        """Retrieve the second chamber temperature (Tin)."""
+        return float(self._flat_boiler_details.Tin)
+
+    @property
+    def heater_enabled(self) -> bool:
+        """Retrieve whether the boiler's heater is currently active."""
+        return str(self._flat_boiler_details.Heater) != "0"
 
     async def turn_on(self) -> None:
         """Turn the boiler on."""
