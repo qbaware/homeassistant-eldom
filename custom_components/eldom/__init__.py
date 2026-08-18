@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import logging
 
+from eldom.client import InvalidCredentialsError as EldomInvalidCredentialsError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
+from ioteldom.client import InvalidCredentialsError as IoTEldomInvalidCredentialsError
 
 from .const import CONF_API, DOMAIN
 from .coordinator import EldomCoordinator
@@ -37,7 +39,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client = EldomClientWrapper(session, username, password, api)
 
     await client.login()
-    connected = await client.is_connected()
+
+    try:
+        connected = await client.is_connected()
+    except (EldomInvalidCredentialsError, IoTEldomInvalidCredentialsError) as err:
+        _LOGGER.error(
+            "Invalid credentials for Eldom API '%s' for '%s'", api, username
+        )
+        raise ConfigEntryAuthFailed(
+            f"Invalid credentials for Eldom API '{api}' for '{username}'"
+        ) from err
+
     if connected is False:
         _LOGGER.error(
             "Unexpected exception while authenticating with Eldom API '%s' for '%s'",
