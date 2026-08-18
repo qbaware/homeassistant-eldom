@@ -106,6 +106,16 @@ Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see t
   - Chamber 1 temperature
   - Chamber 2 temperature
 
+#### 6. IoT convector heaters
+
+Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see the [experimental support note](#supported-devices) above.
+
+- Operational mode selection
+  - `Heat`
+  - `Off`
+- Set target temperature
+- Display current temperature
+
 ### Showcase
 
 ![Flat boiler detailed view](./docs/flat-boiler-detailed-view-new.png)
