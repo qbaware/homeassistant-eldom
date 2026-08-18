@@ -41,6 +41,8 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Day energy consumption
   - Night energy consumption
   - Saved energy
+  - Energy usage reset date
+- `Reset Energy Usage` button
 
 #### 2. Smart boilers
 
@@ -57,6 +59,8 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Day energy consumption
   - Night energy consumption
   - Saved energy
+  - Energy usage reset date
+- `Reset Energy Usage` button
 
 #### 3. Naturela boilers
 
@@ -64,12 +68,19 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - `Electric` (corresponds to "On")
   - `Eco` (corresponds to "Holiday")
   - `Off`
+- Set target temperature
 - Display current temperature
 - Enable `Powerful mode` switch (only works while the boiler is not off)
 - Display sensors
   - Heater is currently on/off
   - Day energy consumption
   - Night energy consumption
+  - Energy usage reset date
+  - Solar collector temperature
+  - Boiler intake temperature
+  - Tank temperature (top, middle, and bottom zones)
+  - Electric heater activation temperature
+- `Reset Energy Usage` button
 
 #### 4. Convector heaters
 
@@ -78,6 +89,22 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - `Off`
 - Set target temperature
 - Display current temperature
+
+#### 5. IoT flat boilers
+
+Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see the [experimental support note](#supported-devices) above.
+
+- Operational mode selection
+  - `Electric` (corresponds to "Extra safe")
+  - `Eco` (corresponds to "Eco")
+  - `High Demand` (corresponds to "Smart")
+  - `Performance` (corresponds to "Powerful")
+  - `Off`
+- Display current temperature (no target temperature control yet)
+- Display sensors
+  - Heater is currently on/off
+  - Chamber 1 temperature
+  - Chamber 2 temperature
 
 ### Showcase
 
