@@ -6,13 +6,11 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy
+from homeassistant.const import UnitOfEnergy, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
-from homeassistant.const import UnitOfTemperature
 
 from .const import (
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
@@ -100,6 +98,32 @@ async def async_setup_entry(
         )
         entities_to_add.append(
             EldomBoilerEnergyUsageResetDateSensor(
+                naturela_boiler, eldom_data.coordinator
+            )
+        )
+        entities_to_add.append(
+            EldomNaturelaSolarTemperatureSensor(naturela_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomNaturelaBoilerTemperatureSensor(
+                naturela_boiler, eldom_data.coordinator
+            )
+        )
+        entities_to_add.append(
+            EldomNaturelaTopTemperatureSensor(naturela_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomNaturelaMiddleTemperatureSensor(
+                naturela_boiler, eldom_data.coordinator
+            )
+        )
+        entities_to_add.append(
+            EldomNaturelaBottomTemperatureSensor(
+                naturela_boiler, eldom_data.coordinator
+            )
+        )
+        entities_to_add.append(
+            EldomNaturelaHeaterOnTemperatureSensor(
                 naturela_boiler, eldom_data.coordinator
             )
         )
@@ -415,6 +439,191 @@ class EldomBoilerEnergyUsageResetDateSensor(SensorEntity, CoordinatorEntity):
         self.async_write_ha_state()
 
 
+class EldomNaturelaTemperatureSensor(SensorEntity, CoordinatorEntity):
+    """Base class for Naturela boiler temperature sensors."""
+
+    def __init__(
+        self, eldom_boiler: EldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
+        """Initialize a Naturela temperature sensor."""
+        super().__init__(coordinator)
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this sensor."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """Return the device class of the sensor."""
+        return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """Return the state class of the sensor."""
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return the unit of measurement."""
+        return UnitOfTemperature.CELSIUS
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
+        self.async_write_ha_state()
+
+
+class EldomNaturelaSolarTemperatureSensor(EldomNaturelaTemperatureSensor):
+    """Sensor for the Naturela boiler's solar collector temperature."""
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-solar-temperature-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Solar Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:solar-panel"
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.solar_temperature
+
+
+class EldomNaturelaBoilerTemperatureSensor(EldomNaturelaTemperatureSensor):
+    """Sensor for the Naturela boiler's intake temperature."""
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-boiler-temperature-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Boiler Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer-water"
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.boiler_temperature
+
+
+class EldomNaturelaTopTemperatureSensor(EldomNaturelaTemperatureSensor):
+    """Sensor for the Naturela boiler's top tank zone temperature."""
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-top-temperature-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Tank Top Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer-chevron-up"
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.top_temperature
+
+
+class EldomNaturelaMiddleTemperatureSensor(EldomNaturelaTemperatureSensor):
+    """Sensor for the Naturela boiler's middle tank zone temperature."""
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-middle-temperature-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Tank Middle Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer"
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.middle_temperature
+
+
+class EldomNaturelaBottomTemperatureSensor(EldomNaturelaTemperatureSensor):
+    """Sensor for the Naturela boiler's bottom tank zone temperature."""
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-bottom-temperature-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Tank Bottom Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer-chevron-down"
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.bottom_temperature
+
+
+class EldomNaturelaHeaterOnTemperatureSensor(EldomNaturelaTemperatureSensor):
+    """Sensor for the Naturela boiler's electric heater activation temperature."""
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-heater-on-temperature-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Heater Activation Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer-alert"
+
+    @property
+    def native_value(self) -> int:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.heater_on_temperature
+
+
 class IoTFlatBoilerHeaterSensor(SensorEntity, CoordinatorEntity):
     """Representation of an IoT Eldom flat boiler's heater."""
 
@@ -597,5 +806,3 @@ class IoTFlatBoilerChamber2TempSensor(SensorEntity, CoordinatorEntity):
         )
 
         self.async_write_ha_state()
-
-

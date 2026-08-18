@@ -1,6 +1,7 @@
 """Eldom boiler objects."""
 
 from abc import ABC, abstractmethod
+import asyncio
 import logging
 
 from eldom.client import Client as EldomClient
@@ -143,6 +144,10 @@ class EldomBoiler(ABC):
     @abstractmethod
     async def enable_powerful_mode(self) -> None:
         """Enable the boiler's powerful mode."""
+
+    @abstractmethod
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
 
     @abstractmethod
     async def reset_energy_usage(self) -> None:
@@ -304,6 +309,13 @@ class FlatEldomBoiler(EldomBoiler):
             self.device_id
         )
 
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
+
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
         self._flat_boiler_details.EnergyD = 0.0
@@ -463,6 +475,13 @@ class SmartEldomBoiler(EldomBoiler):
             self.device_id
         )
 
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
+
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
         self._smart_boiler_details.EnergyD = 0.0
@@ -585,6 +604,36 @@ class NaturelaEldomBoiler(EldomBoiler):
         """Retrieve the date when the energy usage was last reset."""
         return self._naturela_boiler_details.EnergyDate
 
+    @property
+    def solar_temperature(self) -> int:
+        """Retrieve the solar collector temperature."""
+        return self._naturela_boiler_details.TSolar
+
+    @property
+    def boiler_temperature(self) -> int:
+        """Retrieve the boiler intake temperature."""
+        return self._naturela_boiler_details.TBoiler
+
+    @property
+    def top_temperature(self) -> int:
+        """Retrieve the top zone temperature of the tank."""
+        return self._naturela_boiler_details.TTop
+
+    @property
+    def middle_temperature(self) -> int:
+        """Retrieve the middle zone temperature of the tank."""
+        return self._naturela_boiler_details.TMiddle
+
+    @property
+    def bottom_temperature(self) -> int:
+        """Retrieve the bottom zone temperature of the tank."""
+        return self._naturela_boiler_details.TBottom
+
+    @property
+    def heater_on_temperature(self) -> int:
+        """Retrieve the temperature threshold at which the electric heater activates."""
+        return self._naturela_boiler_details.HeaterOnTemp
+
     async def turn_on(self) -> None:
         """Turn the boiler on."""
         await self.set_operation_mode(STATE_ELECTRIC)
@@ -610,9 +659,9 @@ class NaturelaEldomBoiler(EldomBoiler):
 
     async def set_temperature(self, temperature: float) -> None:
         """Set the temperature of the boiler."""
-        # Naturela boilers don't support setting temperature via API yet
-        _LOGGER.warning(
-            "Setting temperature is not supported for Naturela boilers via API"
+        self._naturela_boiler_details.ElSetTemp = temperature
+        await self._eldom_client.naturela_boiler.set_naturela_boiler_temperature(
+            self._id, temperature
         )
 
     async def enable_powerful_mode(self) -> None:
@@ -629,11 +678,17 @@ class NaturelaEldomBoiler(EldomBoiler):
             self.device_id
         )
 
+    async def disable_powerful_mode(self) -> None:
+        """Disable the boiler's powerful mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
+
     async def reset_energy_usage(self) -> None:
         """Reset the energy usage of the boiler."""
-        # Naturela boilers don't support resetting energy usage via API yet
-        _LOGGER.warning(
-            "Resetting energy usage is not supported for Naturela boilers via API"
+        await self._eldom_client.naturela_boiler.reset_naturela_boiler_energy_usage(
+            self.device_id
         )
 
 

@@ -111,8 +111,8 @@ class EldomWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
             identifiers={(DOMAIN, self._eldom_boiler.device_id)},
             manufacturer=MANUFACTURER_NAME,
             model=DEVICE_TYPE_MAPPING.get(self._eldom_boiler.type),
-            sw_version=self._eldom_boiler.software_version,
-            hw_version=self._eldom_boiler.hardware_version,
+            sw_version=str(self._eldom_boiler.software_version),
+            hw_version=str(self._eldom_boiler.hardware_version),
         )
 
     @property
@@ -128,8 +128,6 @@ class EldomWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
     @property
     def supported_features(self) -> WaterHeaterEntityFeature:
         """Return the list of supported features."""
-        if self._eldom_boiler.type == DEVICE_TYPE_NATURELA_BOILER_ELDOM:
-            return SUPPORT_FLAGS_ELDOM_HEATER_NO_TEMP
         return SUPPORT_FLAGS_ELDOM_HEATER
 
     @property

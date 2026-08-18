@@ -88,8 +88,8 @@ class EldomConvectorHeaterEntity(ClimateEntity, CoordinatorEntity):
             identifiers={(DOMAIN, self._convector_heater.device_id)},
             manufacturer=MANUFACTURER_NAME,
             model=DEVICE_TYPE_MAPPING.get(self._convector_heater.type),
-            sw_version=self._convector_heater.software_version,
-            hw_version=self._convector_heater.hardware_version,
+            sw_version=str(self._convector_heater.software_version),
+            hw_version=str(self._convector_heater.hardware_version),
         )
 
     @property

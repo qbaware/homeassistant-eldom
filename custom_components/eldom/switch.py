@@ -1,6 +1,5 @@
 """Switch platform for Eldom integration."""
 
-import logging
 from typing import Any
 
 from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
@@ -21,8 +20,6 @@ from .eldom_boiler import EldomBoiler
 from .models import EldomData
 
 SWITCH_NAME = "Powerful"
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -107,11 +104,8 @@ class EldomBoilerPowerfulModeSwitch(SwitchEntity, CoordinatorEntity):
         self.schedule_update_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn powerful off."""
-        _LOGGER.warning(
-            "Powerful mode cannot be turned off, change the mode to something else to disable the powerful mode"
-        )
-
+        """Turn powerful mode off by cycling off then restoring the previous mode."""
+        await self._eldom_boiler.disable_powerful_mode()
         await self.coordinator.async_request_refresh()
 
     @callback
