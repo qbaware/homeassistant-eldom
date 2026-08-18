@@ -26,7 +26,7 @@ This integration allows you to control Eldom devices via Home Assistant.
 
 Note that there's only one way to control your Eldom devices - via their Cloud APIs. There's no support for local network control.
 
-#### 1. Flat boilers
+### 1. Flat boilers
 
 - Operational mode selection
   - `Electric` (corresponds to "Heating")
@@ -44,7 +44,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Energy usage reset date
 - `Reset Energy Usage` button
 
-#### 2. Smart boilers
+### 2. Smart boilers
 
 - Operational mode selection
   - `Electric` (corresponds to "Heating")
@@ -62,7 +62,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Energy usage reset date
 - `Reset Energy Usage` button
 
-#### 3. Naturela boilers
+### 3. Naturela boilers
 
 - Operational mode selection
   - `Electric` (corresponds to "On")
@@ -82,7 +82,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Electric heater activation temperature
 - `Reset Energy Usage` button
 
-#### 4. Convector heaters
+### 4. Convector heaters
 
 - Operational mode selection
   - `Heat`
@@ -90,7 +90,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
 - Set target temperature
 - Display current temperature
 
-#### 5. IoT flat boilers
+### 5. IoT flat boilers
 
 Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see the [experimental support note](#supported-devices) above.
 
@@ -106,7 +106,7 @@ Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see t
   - Chamber 1 temperature
   - Chamber 2 temperature
 
-#### 6. IoT convector heaters
+### 6. IoT convector heaters
 
 Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see the [experimental support note](#supported-devices) above.
 
