@@ -46,10 +46,6 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Chamber 2 temperature
 - `Reset Energy Usage` button
 
-Dual-tank models (e.g. Galant) report a separate reading per chamber. Both chamber
-sensors are created for every flat boiler, and the current temperature of the water
-heater entity is the average of the two.
-
 ### 2. Smart boilers
 
 - Operational mode selection

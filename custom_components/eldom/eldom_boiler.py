@@ -216,7 +216,6 @@ class FlatEldomBoiler(EldomBoiler):
     @property
     def current_temperature(self) -> float:
         """Retrieve the boiler's current temperature."""
-        # This calculates the average between the two chambers' temperatures
         return (self.chamber1_temperature + self.chamber2_temperature) / 2
 
     @property
