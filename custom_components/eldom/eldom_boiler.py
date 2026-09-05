@@ -216,9 +216,18 @@ class FlatEldomBoiler(EldomBoiler):
     @property
     def current_temperature(self) -> float:
         """Retrieve the boiler's current temperature."""
-        left_chamber = self._flat_boiler_details.STL_Temp
-        right_chamber = self._flat_boiler_details.FT_Temp
-        return (left_chamber + right_chamber) / 2
+        # This calculates the average between the two chambers' temperatures
+        return (self.chamber1_temperature + self.chamber2_temperature) / 2
+
+    @property
+    def chamber1_temperature(self) -> float:
+        """Retrieve the first chamber temperature (STL_Temp)."""
+        return self._flat_boiler_details.STL_Temp
+
+    @property
+    def chamber2_temperature(self) -> float:
+        """Retrieve the second chamber temperature (FT_Temp)."""
+        return self._flat_boiler_details.FT_Temp
 
     @property
     def target_temperature(self) -> float:
