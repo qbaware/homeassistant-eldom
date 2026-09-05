@@ -34,7 +34,7 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - `High Demand` (corresponds to "Study")
   - `Off`
 - Set target temperature
-- Display current temperature
+- Display current temperature (the average of both chambers)
 - Enable `Powerful mode` switch (only works while `Eco` mode is enabled)
 - Display sensors
   - Heater is currently on/off
@@ -42,6 +42,8 @@ Note that there's only one way to control your Eldom devices - via their Cloud A
   - Night energy consumption
   - Saved energy
   - Energy usage reset date
+  - Chamber 1 temperature
+  - Chamber 2 temperature
 - `Reset Energy Usage` button
 
 ### 2. Smart boilers

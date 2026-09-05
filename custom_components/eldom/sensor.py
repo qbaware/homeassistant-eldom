@@ -20,7 +20,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import EldomCoordinator
-from .eldom_boiler import EldomBoiler, FlatIoTEldomBoiler
+from .eldom_boiler import EldomBoiler, FlatEldomBoiler, FlatIoTEldomBoiler
 from .models import EldomData
 
 HEATER_STATE_ON = "On"
@@ -57,6 +57,12 @@ async def async_setup_entry(
         )
         entities_to_add.append(
             EldomBoilerEnergyUsageResetDateSensor(flat_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomFlatBoilerChamber1TempSensor(flat_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomFlatBoilerChamber2TempSensor(flat_boiler, eldom_data.coordinator)
         )
 
     for smart_boiler in eldom_data.coordinator.data.get(
@@ -428,6 +434,132 @@ class EldomBoilerEnergyUsageResetDateSensor(SensorEntity, CoordinatorEntity):
             return "Never"
 
         return self._eldom_boiler.energy_usage_reset_date
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
+
+        self.async_write_ha_state()
+
+
+class EldomFlatBoilerChamber1TempSensor(SensorEntity, CoordinatorEntity):
+    """Representation of an Eldom flat boiler's chamber 1 temperature."""
+
+    def __init__(
+        self, eldom_boiler: FlatEldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
+        """Initialize an Eldom flat boiler chamber 1 temperature sensor."""
+        super().__init__(coordinator)
+
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-chamber1-temp-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Chamber 1 Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer"
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """Return the device class of the sensor."""
+        return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """Return the state class of the sensor."""
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return the unit of measurement."""
+        return UnitOfTemperature.CELSIUS
+
+    @property
+    def native_value(self) -> float:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.chamber1_temperature
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._eldom_boiler = self.coordinator.data.get(self._eldom_boiler.type).get(
+            self._eldom_boiler.id
+        )
+
+        self.async_write_ha_state()
+
+
+class EldomFlatBoilerChamber2TempSensor(SensorEntity, CoordinatorEntity):
+    """Representation of an Eldom flat boiler's chamber 2 temperature."""
+
+    def __init__(
+        self, eldom_boiler: FlatEldomBoiler, coordinator: EldomCoordinator
+    ) -> None:
+        """Initialize an Eldom flat boiler chamber 2 temperature sensor."""
+        super().__init__(coordinator)
+
+        self._eldom_boiler = eldom_boiler
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this water heater."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._eldom_boiler.device_id)},
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self._eldom_boiler.device_id}-chamber2-temp-sensor"
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return f"{self._eldom_boiler.name}'s Chamber 2 Temperature"
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the sensor."""
+        return "mdi:thermometer"
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """Return the device class of the sensor."""
+        return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """Return the state class of the sensor."""
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return the unit of measurement."""
+        return UnitOfTemperature.CELSIUS
+
+    @property
+    def native_value(self) -> float:
+        """Return the state of the sensor."""
+        return self._eldom_boiler.chamber2_temperature
 
     @callback
     def _handle_coordinator_update(self) -> None:
