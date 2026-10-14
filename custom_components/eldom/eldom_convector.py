@@ -155,13 +155,18 @@ class IoTEldomConvectorHeater:
     def __init__(
         self,
         device: IoTEldomConvectorHeaterDevice,
-        convector_heater_details: IoTEldomConvectorHeaterDetails,
+        convector_heater_details: IoTEldomConvectorHeaterDetails | None,
         iot_eldom_client: IoTEldomClient,
     ) -> None:
         """Initialize the heater."""
         self._convector_heater_device = device
         self._convector_heater_details = convector_heater_details
         self._iot_eldom_client = iot_eldom_client
+
+    @property
+    def available(self) -> bool:
+        """Return False if the heater did not respond to the last status request."""
+        return self._convector_heater_details is not None
 
     @property
     def id(self) -> int:
@@ -199,18 +204,24 @@ class IoTEldomConvectorHeater:
         return MIN_TEMP
 
     @property
-    def current_temperature(self) -> float:
+    def current_temperature(self) -> float | None:
         """Retrieve the heater's current temperature."""
+        if not self.available:
+            return None
         return float(self._convector_heater_details.T) / 10
 
     @property
-    def target_temperature(self) -> float:
+    def target_temperature(self) -> float | None:
         """Retrieve the heater's target temperature."""
+        if not self.available:
+            return None
         return float(self._convector_heater_details.TSet) / 10
 
     @property
-    def current_operation(self) -> HVACMode:
+    def current_operation(self) -> HVACMode | None:
         """Return current operation, i.e., Off or On."""
+        if not self.available:
+            return None
         return IOT_ELDOM_OPERATION_MODES.get(
             self._convector_heater_details.Operation, "Unknown"
         )
@@ -232,7 +243,8 @@ class IoTEldomConvectorHeater:
             operation_mode
         ]
 
-        self._convector_heater_details.Operation = operation_mode_id
+        if self.available:
+            self._convector_heater_details.Operation = operation_mode_id
 
         await self._iot_eldom_client.convector_heater.set_convector_heater_state(
             self._convector_heater_device, int(operation_mode_id)
@@ -240,7 +252,8 @@ class IoTEldomConvectorHeater:
 
     async def set_temperature(self, temperature: float) -> None:
         """Set the temperature of the heater."""
-        self._convector_heater_details.TSet = str(int(temperature) * 10)
+        if self.available:
+            self._convector_heater_details.TSet = str(int(temperature) * 10)
 
         await self._iot_eldom_client.convector_heater.set_convector_heater_temperature(
             self._convector_heater_device, int(temperature)

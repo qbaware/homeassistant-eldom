@@ -200,6 +200,11 @@ class IoTEldomConvectorHeaterEntity(ClimateEntity, CoordinatorEntity):
         self._convector_heater = convector_heater
 
     @property
+    def available(self) -> bool:
+        """Return False if the heater is offline."""
+        return super().available and self._convector_heater.available
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return device information about this convector heater."""
         return DeviceInfo(

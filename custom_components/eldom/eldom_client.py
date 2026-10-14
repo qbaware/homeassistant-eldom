@@ -1,5 +1,7 @@
 """A wrapper Eldom client uses whichever of the two clients is authenticaed."""
 
+import logging
+
 import aiohttp
 from eldom.client import Client as EldomClient
 from ioteldom.client import Client as IoTEldomClient
@@ -16,6 +18,8 @@ from .const import (
 )
 from .eldom_boiler import FlatEldomBoiler, NaturelaEldomBoiler, SmartEldomBoiler, FlatIoTEldomBoiler
 from .eldom_convector import EldomConvectorHeater, IoTEldomConvectorHeater
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class EldomClientWrapper:
@@ -136,9 +140,7 @@ class EldomClientWrapper:
         convector_heaters: dict[str, IoTEldomConvectorHeater] = {
             device.uuid: IoTEldomConvectorHeater(
                 device,
-                await self.iot_eldom_client.convector_heater.get_convector_heater_status(
-                    device
-                ),
+                await self._get_iot_convector_heater_status(device),
                 self.iot_eldom_client,
             )
             for device in devices
@@ -156,3 +158,22 @@ class EldomClientWrapper:
         }
 
         return convector_heaters, flat_boilers
+
+    async def _get_iot_convector_heater_status(self, device):
+        """Fetch a convector heater's status, or None if the heater is offline.
+
+        The status request is relayed to the heater itself, so a heater that has
+        dropped off its WiFi makes it fail (e.g. with 406 Not Acceptable). That
+        should only make this heater unavailable, not fail the whole entry.
+        """
+        try:
+            return await self.iot_eldom_client.convector_heater.get_convector_heater_status(
+                device
+            )
+        except (aiohttp.ClientError, TimeoutError) as err:
+            _LOGGER.warning(
+                "Convector heater %s is not responding, marking it unavailable: %s",
+                device.uuid,
+                err,
+            )
+            return None
