@@ -20,6 +20,8 @@ from homeassistant.components.water_heater import (
 )
 from homeassistant.const import STATE_OFF
 
+from .eboiler_api import EBoilerClient, EBoilerDetails
+
 MAX_TEMP = 75
 MIN_TEMP = 35
 
@@ -45,6 +47,23 @@ NATURELA_OPERATION_MODES = {
     0: STATE_OFF,
     1: STATE_ELECTRIC,  # Matches: "On"
     2: STATE_ECO,  # Matches: "Holiday"
+}
+
+# `setState` values for electric boilers, as sent by myeldom.com for WV08039EW
+# (HW 13, SW 36). Bit 7 of `State` means the boiler is switched off.
+E_BOILER_STATE_OFF = 128
+E_BOILER_OPERATION_MODES = {
+    E_BOILER_STATE_OFF: STATE_OFF,
+    0: STATE_ELECTRIC,  # Matches: "On"
+    1: STATE_ECO,  # Matches: "Smart"
+    2: "timers",  # Matches: "Timers"
+    3: "delayed_start",  # Matches: "Delayed Start"
+}
+
+E_BOILER_SMART_CONTROL_MODES = {
+    0: "eco",
+    1: "normal",
+    2: "power",
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -698,6 +717,174 @@ class NaturelaEldomBoiler(EldomBoiler):
         await self._eldom_client.naturela_boiler.reset_naturela_boiler_energy_usage(
             self.device_id
         )
+
+
+class EEldomBoiler(EldomBoiler):
+    """An Eldom electric boiler (device type 3, `/api/eboiler`) representation object."""
+
+    def __init__(
+        self,
+        id: int,
+        device_name: str | None,
+        e_boiler_details: EBoilerDetails,
+        eboiler_client: EBoilerClient,
+    ) -> None:
+        """Initialize the electric boiler."""
+        self._id = id
+        self._device_name = device_name
+        self._e_boiler_details = e_boiler_details
+        self._eboiler_client = eboiler_client
+
+    @property
+    def id(self) -> int:
+        """Retrieve the boiler's ID."""
+        return self._id
+
+    @property
+    def device_id(self) -> str:
+        """Retrieve the boiler's device ID."""
+        return self._e_boiler_details.DeviceID
+
+    @property
+    def name(self) -> str:
+        """Retrieve the boiler's name."""
+        if self._device_name:
+            return f"Boiler {self._device_name}"
+        return f"Electric Boiler ({self._e_boiler_details.DeviceID[-4:]})"
+
+    @property
+    def type(self) -> int:
+        """Retrieve the boiler's type."""
+        return self._e_boiler_details.Type
+
+    @property
+    def software_version(self) -> str:
+        """Retrieve the boiler's software version."""
+        return self._e_boiler_details.SoftwareVersion
+
+    @property
+    def hardware_version(self) -> str:
+        """Retrieve the boiler's hardware version."""
+        return self._e_boiler_details.HardwareVersion
+
+    @property
+    def operation_modes(self) -> list[str]:
+        """Retrieve the boiler's operation modes."""
+        return list(E_BOILER_OPERATION_MODES.values())
+
+    @property
+    def max_temperature(self) -> float:
+        """Retrieve the boiler's maximum temperature."""
+        return MAX_TEMP
+
+    @property
+    def min_temperature(self) -> float:
+        """Retrieve the boiler's minimum temperature."""
+        return MIN_TEMP
+
+    @property
+    def current_temperature(self) -> float:
+        """Retrieve the boiler's current temperature."""
+        return self._e_boiler_details.TBottom
+
+    @property
+    def target_temperature(self) -> float:
+        """Retrieve the boiler's target temperature."""
+        return self._e_boiler_details.ElSetTemp
+
+    @property
+    def powerful_enabled(self) -> bool:
+        """Retrieve whether the heating element is on (Boost)."""
+        return self._e_boiler_details.Heater
+
+    @property
+    def smart_control_mode(self) -> str:
+        """Retrieve the "Smart control" mode: eco, normal or power."""
+        return E_BOILER_SMART_CONTROL_MODES.get(
+            self._e_boiler_details.SmartControl, "eco"
+        )
+
+    @property
+    def day_energy_consumption(self) -> float:
+        """Retrieve the boiler's day energy consumption."""
+        return self._e_boiler_details.EnergyD
+
+    @property
+    def night_energy_consumption(self) -> float:
+        """Retrieve the boiler's night energy consumption."""
+        return self._e_boiler_details.EnergyN
+
+    @property
+    def saved_energy(self) -> float:
+        """Electric boilers don't track saved energy."""
+        return 0
+
+    @property
+    def current_operation(self) -> str:
+        """Return current operation mode."""
+        state = self._e_boiler_details.State
+        if state & E_BOILER_STATE_OFF:
+            return STATE_OFF
+        return E_BOILER_OPERATION_MODES.get(state, "Unknown")
+
+    @property
+    def heater_enabled(self) -> bool:
+        """Retrieve whether the boiler's heater is enabled."""
+        return self._e_boiler_details.Heater
+
+    @property
+    def energy_usage_reset_date(self) -> str:
+        """Retrieve the date when the energy usage was last reset."""
+        return self._e_boiler_details.EnergyDate
+
+    async def turn_on(self) -> None:
+        """Turn the boiler on."""
+        await self.set_operation_mode(STATE_ELECTRIC)
+
+    async def turn_off(self) -> None:
+        """Turn the boiler off."""
+        await self.set_operation_mode(STATE_OFF)
+
+    async def set_operation_mode(self, operation_mode: str) -> None:
+        """Set new target operation mode."""
+        if operation_mode not in E_BOILER_OPERATION_MODES.values():
+            raise ValueError("Operation mode not supported")
+
+        state = {v: k for k, v in E_BOILER_OPERATION_MODES.items()}[operation_mode]
+        self._e_boiler_details.State = state
+        await self._eboiler_client.set_eboiler_state(self.device_id, state)
+
+    async def set_temperature(self, temperature: float) -> None:
+        """Set the temperature of the boiler."""
+        self._e_boiler_details.ElSetTemp = temperature
+        await self._eboiler_client.set_eboiler_temperature(
+            self.device_id, temperature
+        )
+
+    async def enable_powerful_mode(self) -> None:
+        """Turn on the heating element right away (Boost)."""
+        if self.current_operation == STATE_OFF:
+            _LOGGER.warning("Boost can only be turned on when the boiler is not off")
+            return
+
+        self._e_boiler_details.Heater = True
+        await self._eboiler_client.set_eboiler_heater_on(self.device_id)
+
+    async def disable_powerful_mode(self) -> None:
+        """Stop Boost by cycling off and restoring the previous mode."""
+        previous_mode = self.current_operation
+        await self.turn_off()
+        await asyncio.sleep(1)
+        await self.set_operation_mode(previous_mode)
+
+    async def set_smart_control_mode(self, mode: str) -> None:
+        """Set the "Smart control" mode: eco, normal or power."""
+        value = {v: k for k, v in E_BOILER_SMART_CONTROL_MODES.items()}[mode]
+        self._e_boiler_details.SmartControl = value
+        await self._eboiler_client.set_eboiler_smart_control(self._id, value)
+
+    async def reset_energy_usage(self) -> None:
+        """Energy reset is not supported for electric boilers yet."""
 
 
 class IoTEldomBoiler(ABC):

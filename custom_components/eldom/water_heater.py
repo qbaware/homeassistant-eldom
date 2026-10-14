@@ -16,6 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    DEVICE_TYPE_E_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
     DEVICE_TYPE_MAPPING,
     DEVICE_TYPE_NATURELA_BOILER_ELDOM,
@@ -78,6 +79,13 @@ async def async_setup_entry(
     )
 
     async_add_entities(
+        EldomWaterHeaterEntity(e_boiler, eldom_data.coordinator)
+        for e_boiler in eldom_data.coordinator.data.get(
+            DEVICE_TYPE_E_BOILER_ELDOM, {}
+        ).values()
+    )
+
+    async_add_entities(
         IoTEldomWaterHeaterEntity(flat_boiler, eldom_data.coordinator)
         for flat_boiler in eldom_data.coordinator.data.get(
             DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM
@@ -124,6 +132,13 @@ class EldomWaterHeaterEntity(WaterHeaterEntity, CoordinatorEntity):
     def name(self) -> str:
         """Return the name of the water heater."""
         return self._eldom_boiler.name
+
+    @property
+    def translation_key(self) -> str | None:
+        """Return the translation key, used for operation mode labels and icons."""
+        if self._eldom_boiler.type == DEVICE_TYPE_E_BOILER_ELDOM:
+            return "e_boiler"
+        return None
 
     @property
     def supported_features(self) -> WaterHeaterEntityFeature:

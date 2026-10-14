@@ -7,6 +7,7 @@ from ioteldom.client import Client as IoTEldomClient
 from .const import (
     DEVICE_TYPE_CONVECTOR_HEATER_ELDOM,
     DEVICE_TYPE_CONVECTOR_HEATER_IOT_ELDOM,
+    DEVICE_TYPE_E_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM,
     DEVICE_TYPE_NATURELA_BOILER_ELDOM,
@@ -14,7 +15,14 @@ from .const import (
     ELDOM_API,
     IOT_ELDOM_API,
 )
-from .eldom_boiler import FlatEldomBoiler, NaturelaEldomBoiler, SmartEldomBoiler, FlatIoTEldomBoiler
+from .eboiler_api import EBoilerClient
+from .eldom_boiler import (
+    EEldomBoiler,
+    FlatEldomBoiler,
+    FlatIoTEldomBoiler,
+    NaturelaEldomBoiler,
+    SmartEldomBoiler,
+)
 from .eldom_convector import EldomConvectorHeater, IoTEldomConvectorHeater
 
 
@@ -34,6 +42,7 @@ class EldomClientWrapper:
         self.api = api
 
         self.eldom_client = EldomClient(session)
+        self.eboiler_client = EBoilerClient(session)
         self.iot_eldom_client = IoTEldomClient(session, username, password)
 
     async def login(self):
@@ -60,6 +69,7 @@ class EldomClientWrapper:
             eldom_smart_boilers,
             eldom_naturela_boilers,
             eldom_convector_heaters,
+            eldom_e_boilers,
         ) = await self._fetch_eldom_data()
         (
             iot_eldom_convector_heaters,
@@ -71,13 +81,14 @@ class EldomClientWrapper:
             DEVICE_TYPE_SMART_BOILER_ELDOM: eldom_smart_boilers,
             DEVICE_TYPE_NATURELA_BOILER_ELDOM: eldom_naturela_boilers,
             DEVICE_TYPE_CONVECTOR_HEATER_ELDOM: eldom_convector_heaters,
+            DEVICE_TYPE_E_BOILER_ELDOM: eldom_e_boilers,
             DEVICE_TYPE_CONVECTOR_HEATER_IOT_ELDOM: iot_eldom_convector_heaters,
             DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM: iot_eldom_flat_boilers,
         }
 
     async def _fetch_eldom_data(self):
         if self.api != ELDOM_API:
-            return {}, {}, {}, {}
+            return {}, {}, {}, {}, {}
 
         devices = await self.eldom_client.get_devices()
 
@@ -125,7 +136,24 @@ class EldomClientWrapper:
             if device.deviceType == DEVICE_TYPE_CONVECTOR_HEATER_ELDOM
         }
 
-        return flat_boilers, smart_boilers, naturela_boilers, convector_heaters
+        e_boilers: dict[str, EEldomBoiler] = {
+            device.id: EEldomBoiler(
+                device.id,
+                device.name,
+                await self.eboiler_client.get_eboiler_status(device.id),
+                self.eboiler_client,
+            )
+            for device in devices
+            if device.deviceType == DEVICE_TYPE_E_BOILER_ELDOM
+        }
+
+        return (
+            flat_boilers,
+            smart_boilers,
+            naturela_boilers,
+            convector_heaters,
+            e_boilers,
+        )
 
     async def _fetch_iot_eldom_data(self):
         if self.api != IOT_ELDOM_API:

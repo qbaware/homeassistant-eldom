@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    DEVICE_TYPE_E_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
     DEVICE_TYPE_NATURELA_BOILER_ELDOM,
     DEVICE_TYPE_SMART_BOILER_ELDOM,
@@ -51,6 +52,13 @@ async def async_setup_entry(
         EldomBoilerPowerfulModeSwitch(naturela_boiler, eldom_data.coordinator)
         for naturela_boiler in eldom_data.coordinator.data.get(
             DEVICE_TYPE_NATURELA_BOILER_ELDOM, []
+        ).values()
+    )
+
+    async_add_entities(
+        EldomBoilerPowerfulModeSwitch(e_boiler, eldom_data.coordinator)
+        for e_boiler in eldom_data.coordinator.data.get(
+            DEVICE_TYPE_E_BOILER_ELDOM, {}
         ).values()
     )
 

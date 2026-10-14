@@ -1,0 +1,16 @@
+{
+  "entity": {
+    "water_heater": {
+      "e_boiler": {
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "timers": "mdi:clock-outline",
+              "delayed_start": "mdi:timer-play-outline"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -118,6 +118,22 @@ Devices managed via the `Eldom` app (or the `iot.myeldom.com` website) — see t
 - Set target temperature
 - Display current temperature
 
+### 7. Electric boilers (My Eldom device type 3)
+
+Classic electric water heaters with a Wi-Fi module, e.g. WV08039EW.
+
+- Operational mode selection
+  - `Electric` (corresponds to "On")
+  - `Eco` (corresponds to "Smart")
+  - `timers` (corresponds to "Timers")
+  - `delayed_start` (corresponds to "Delayed Start")
+  - `Off`
+- Set target temperature
+- Display current temperature
+- `Powerful mode` switch (corresponds to "Boost")
+- `Smart Control Mode` select (`eco`, `normal`, `power`)
+- Sensors for heater on/off and day/night energy consumption
+
 ### Showcase
 
 ![Flat boiler detailed view](./docs/flat-boiler-detailed-view-new.png)

@@ -18,5 +18,25 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
+  },
+  "entity": {
+    "water_heater": {
+      "e_boiler": {
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "electric": "On",
+              "timers": "Timers",
+              "delayed_start": "Delayed Start"
+            }
+          }
+        },
+        "state": {
+          "electric": "On",
+          "timers": "Timers",
+          "delayed_start": "Delayed Start"
+        }
+      }
+    }
   }
 }

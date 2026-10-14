@@ -20,6 +20,7 @@ from .models import EldomData
 PLATFORMS: list[Platform] = [
     Platform.BUTTON,
     Platform.CLIMATE,
+    Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.WATER_HEATER,

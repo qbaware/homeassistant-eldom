@@ -13,6 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    DEVICE_TYPE_E_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_ELDOM,
     DEVICE_TYPE_FLAT_BOILER_IOT_ELDOM,
     DEVICE_TYPE_NATURELA_BOILER_ELDOM,
@@ -84,6 +85,19 @@ async def async_setup_entry(
         )
         entities_to_add.append(
             EldomBoilerEnergyUsageResetDateSensor(smart_boiler, eldom_data.coordinator)
+        )
+
+    for e_boiler in eldom_data.coordinator.data.get(
+        DEVICE_TYPE_E_BOILER_ELDOM, {}
+    ).values():
+        entities_to_add.append(
+            EldomBoilerDayEnergyConsumptionSensor(e_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomBoilerNightEnergyConsumptionSensor(e_boiler, eldom_data.coordinator)
+        )
+        entities_to_add.append(
+            EldomBoilerHeaterSensor(e_boiler, eldom_data.coordinator)
         )
 
     for naturela_boiler in eldom_data.coordinator.data.get(
