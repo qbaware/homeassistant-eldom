@@ -14,6 +14,15 @@ from homeassistant.components.climate import HVACMode
 
 ELDOM_OPERATION_MODES = {0: HVACMode.OFF, 1: HVACMode.HEAT}
 IOT_ELDOM_OPERATION_MODES = {"0": HVACMode.OFF, "16": HVACMode.HEAT}
+# The ELDOM app (HTRCNV checkDeviceStatuses) splits Operation into a
+# high-nibble operating mode and low-nibble flags. Keep command IDs separate:
+# pyeldom only implements the On/Off commands, not schedule activation.
+IOT_ELDOM_BASE_MODES = {
+    0: (HVACMode.OFF, "off"),
+    1: (HVACMode.HEAT, "manual"),
+    2: (HVACMode.AUTO, "weekly_program"),
+    3: (HVACMode.AUTO, "timer"),
+}
 
 MAX_TEMP = 35
 MIN_TEMP = 5
@@ -185,8 +194,15 @@ class IoTEldomConvectorHeater:
 
     @property
     def operation_modes(self) -> list[HVACMode]:
-        """Retrieve the heater's operation modes. Modes are: Off, On."""
-        return list(IOT_ELDOM_OPERATION_MODES.values())
+        """Offer existing controls and reflect an active automatic programme.
+
+        AUTO can be retained while already active, but activating a programme
+        from another mode is left to the manufacturer's app.
+        """
+        modes = list(IOT_ELDOM_OPERATION_MODES.values())
+        if self.current_operation == HVACMode.AUTO:
+            modes.append(HVACMode.AUTO)
+        return modes
 
     @property
     def max_temperature(self) -> float:
@@ -209,11 +225,30 @@ class IoTEldomConvectorHeater:
         return float(self._convector_heater_details.TSet) / 10
 
     @property
-    def current_operation(self) -> HVACMode:
-        """Return current operation, i.e., Off or On."""
-        return IOT_ELDOM_OPERATION_MODES.get(
-            self._convector_heater_details.Operation, "Unknown"
-        )
+    def current_operation(self) -> HVACMode | None:
+        """Decode operating mode independently from flags such as sleep."""
+        mode = self._base_operation
+        return IOT_ELDOM_BASE_MODES[mode][0] if mode in IOT_ELDOM_BASE_MODES else None
+
+    @property
+    def _base_operation(self) -> int | None:
+        """Mirror the app's Math.floor(Operation / 16) for valid byte values."""
+        value = self.operation_code
+        if not value.isascii() or not value.isdecimal():
+            return None
+        operation = int(value)
+        return operation // 16 if 0 <= operation <= 255 else None
+
+    @property
+    def operation_name(self) -> str | None:
+        """Distinguish weekly programming from timer and manual operation."""
+        mode = self._base_operation
+        return IOT_ELDOM_BASE_MODES[mode][1] if mode in IOT_ELDOM_BASE_MODES else None
+
+    @property
+    def operation_code(self) -> str:
+        """Keep unrecognised manufacturer modes available for diagnostics."""
+        return str(self._convector_heater_details.Operation)
 
     async def turn_on(self) -> None:
         """Turn the heater on."""
@@ -225,6 +260,10 @@ class IoTEldomConvectorHeater:
 
     async def set_operation_mode(self, operation_mode: HVACMode) -> None:
         """Set new target operation mode."""
+        if operation_mode == HVACMode.AUTO:
+            if self.current_operation == HVACMode.AUTO:
+                return  # Retain the active programme without sending a command.
+            raise ValueError("Activate the programme in the Eldom app")
         if operation_mode not in IOT_ELDOM_OPERATION_MODES.values():
             raise ValueError("Operation mode not supported")
 

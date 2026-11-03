@@ -259,6 +259,14 @@ class IoTEldomConvectorHeaterEntity(ClimateEntity, CoordinatorEntity):
         """Return the list of available operation modes."""
         return self._convector_heater.operation_modes
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None]:
+        """Keep the manufacturer's programme and raw code visible."""
+        return {
+            "eldom_operation_code": self._convector_heater.operation_code,
+            "eldom_operation_mode": self._convector_heater.operation_name,
+        }
+
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the convector heater on."""
         await self._convector_heater.turn_on()
